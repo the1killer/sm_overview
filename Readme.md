@@ -10,7 +10,7 @@ https://the1killer.github.io/scrapmechanicmap/
 1. **Really backup your save!**
 1. Install [AutoHotKey]
 1. Enable dev mode in SurvivalGame.lua, change `if g_survivalDev then`  to  `if true then` around line 84 after function **SurvivalGame.client_onCreate**
-1. Add /tp command to SurvivalGame.lua:
+1. Add /tp command to SurvivalGame.lua (see [SurvivalGame.lua](./SurvivalGame.lua)):
     - add /tp to list of chat commands ~line 130
     - add /tp handler ~line 529, before block of commands starting with **elseif params[1] == "/clearpathnodes**
 1. Reload save if already in game.

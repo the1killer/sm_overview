@@ -81,7 +81,6 @@ function SurvivalGame.server_onRefresh( self )
 end
 
 function SurvivalGame.client_onCreate( self )
-	--if g_survivalDev then
 	if true then
 		sm.game.bindChatCommand( "/ammo", { { "int", "quantity", true } }, "cl_onChatCommand", "Give ammo (default 40)" )
 		sm.game.bindChatCommand( "/spudgun", {}, "cl_onChatCommand", "Give the spudgun" )
@@ -132,9 +131,7 @@ function SurvivalGame.client_onCreate( self )
 
 		--custom
 		sm.game.bindChatCommand( "/tp", { { "string", "x,y,z", false } }, "cl_onChatCommand", "Teleport to numerical position" )
-		sm.game.bindChatCommand( "/gui", { { "string", "on/off", false } }, "cl_onChatCommand", "Turn GUI on/off" )
 		sm.game.bindChatCommand( "/dir", { }, "cl_onChatCommand", "Tell you direction vector you are looking at." )
-		sm.game.bindChatCommand( "/map", { }, "cl_onChatCommand", "Generate map images" )
 	end
 
 	self.cl = {}
@@ -272,15 +269,6 @@ end
 
 function SurvivalGame.client_showMessage( self, params )
 	sm.gui.chatMessage( params )
-end
-
-function SurvivalGame.client_hidegui( self, params )
-	print("client_hidegui "..params)
-	if params == "off" then
-		sm.gui.hideGui( true )
-	else
-		sm.gui.hideGui( false )
-	end
 end
 
 function SurvivalGame.cl_onChatCommand( self, params )
@@ -425,8 +413,6 @@ function SurvivalGame.sv_switchGodMode( self )
 	self.network:sendToClients( "client_showMessage", "GODMODE: " .. ( g_godMode and "On" or "Off" ) )
 end
 
-
-
 function SurvivalGame.sv_enableRestrictions( self, state )
 	sm.game.enableRestrictions( state )
 	self.network:sendToClients( "client_showMessage", ( state and "Restricted" or "Unrestricted"  ) )
@@ -521,32 +507,29 @@ function SurvivalGame.sv_onChatCommand( self, params, player )
 		local pos
 		if params[2] == "here" then
 			pos = player.character:getWorldPosition()
-			--print("x:"..pos.x/64.." y:"..pos.y/64)
 		elseif params[2] == "start" then
 			pos = START_AREA_SPAWN_POINT
 		elseif params[2] == "hideout" then
 			pos = sm.vec3.new( 32, -1248, 100 )
-		elseif params[2] == "base" then
-			pos = sm.vec3.new( -1707, -1631, 2 )
 		else
 			self.network:sendToClient( player, "client_showMessage", "Unknown place" )
 		end
 		if pos then
 			local cellX, cellY = math.floor( pos.x/64 ), math.floor( pos.y/64 )
-			print("x:"..cellX.." y:"..cellY)
-			self.network:sendToClient( player, "client_showMessage", "x:"..math.floor(pos.x).." y:"..math.floor(pos.y).." z:"..math.floor(pos.z) )
 			self.sv.saved.overworld:loadCell( cellX, cellY, player, "sv_recreatePlayerCharacter", { pos = pos, dir = player.character:getDirection() } )
 		end
 
 	elseif params[1] == "/respawn" then
 		sm.event.sendToPlayer( player, "sv_e_respawn" )
 
+	elseif params[1] == "/printglobals" then
+		print( "Globals:" )
+		for k,_ in pairs(_G) do
+			print( k )
+		end
 	elseif params[1] == "/dir" then
 		local dir = player.character:getDirection()
 		self.network:sendToClient( player, "client_showMessage", "x:"..dir.x.." y:"..dir.y.." z:"..dir.z)
-	elseif params[1] == "/gui" then
-		print("/gui "..params[2])
-		self.network:sendToClient( player, "client_hidegui", params[2] )
 	elseif params[1] == "/tp" then
 		local pos
 		if params[2] == "here" then
@@ -572,28 +555,6 @@ function SurvivalGame.sv_onChatCommand( self, params, player )
 			dir.z = -1
 			self.sv.saved.overworld:loadCell( cellX, cellY, player, "sv_recreatePlayerCharacter", { pos = pos, dir = dir } )
 		end
-	elseif params[1] == "/map" then
-		local pos = player.character:getWorldPosition()
-		--pos = sm.vec3.new( tonumber(x),tonumber(y),tonumber(z) )
-		g_godMode = true
-		pos.z = 500
-		if pos then
-			local cellX, cellY = math.floor( pos.x/64 ), math.floor( pos.y/64 )
-			print("x:"..cellX.." y:"..cellY)
-			self.network:sendToClient( player, "client_showMessage", "x:"..math.floor(pos.x).." y:"..math.floor(pos.y).." z:"..math.floor(pos.z) )
-			local dir = player.character:getDirection()
-			dir.x = -1
-			dir.y = -1
-			dir.z = -1
-			self.sv.saved.overworld:loadCell( cellX, cellY, player, "sv_recreatePlayerCharacter", { pos = pos, dir = dir } )
-		end
-
-	elseif params[1] == "/printglobals" then
-		print( "Globals:" )
-		for k,_ in pairs(_G) do
-			print( k )
-		end
-
 	elseif params[1] == "/clearpathnodes"
 		or params[1] == "/enablepathpotatoes"
 		or params[1] == "/starterkit"
@@ -731,6 +692,9 @@ function SurvivalGame.sv_e_createElevatorDestination( self, params )
 		elseif params.name == "ELEVATOR_EXIT" then
 			if #warehouse.exits > 0 then
 				for _,cell in ipairs( warehouse.exits ) do
+					if not sm.exists( warehouse.world ) then
+						sm.world.loadWorld( warehouse.world )
+					end
 					local name = params.name.." "..cell.x..","..cell.y
 					sm.portal.addWorldPortalHook( warehouse.world, name, params.portal )
 					print( "Added portal hook '"..name.."' in world "..warehouse.world.id )
@@ -815,7 +779,7 @@ function SurvivalGame.sv_recreatePlayerCharacter( self, world, x, y, player, par
 end
 
 function SurvivalGame.sv_e_prepareCell( self, params )
-	if sm.exists( params.world ) == false then
+	if not sm.exists( params.world ) then
 		sm.world.loadWorld( params.world )
 	end
 	for _,player in ipairs( params.players ) do
@@ -836,6 +800,9 @@ function SurvivalGame.sv_e_respawn( self, params )
 		if g_survivalDev then
 			spawnPoint = SURVIVAL_DEV_SPAWN_POINT
 		end
+		if not sm.exists( self.saved.overworld ) then
+			sm.world.loadWorld( self.saved.overworld )
+		end
 		self.saved.overworld:loadCell( math.floor( spawnPoint.x/64 ), math.floor( spawnPoint.y/64 ), params.player, "sv_createNewPlayer" )
 	end
 end
@@ -845,9 +812,17 @@ function SurvivalGame.sv_loadedRespawnCell( self, world, x, y, player )
 end
 
 function SurvivalGame.sv_e_markBag( self, params )
-	sm.event.sendToWorld( params.world, "sv_e_markBag", params )
+	if sm.exists( params.world ) then
+		sm.event.sendToWorld( params.world, "sv_e_markBag", params )
+	else
+		sm.log.warning("SurvivalGame.sv_e_markBag in a world that doesn't exist")
+	end
 end
 
 function SurvivalGame.sv_e_unmarkBag( self, params )
-	sm.event.sendToWorld( params.world, "sv_e_unmarkBag", params )
+	if sm.exists( params.world ) then
+		sm.event.sendToWorld( params.world, "sv_e_unmarkBag", params )
+	else
+		sm.log.warning("SurvivalGame.sv_e_unmarkBag in a world that doesn't exist")
+	end
 end
