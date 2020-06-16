@@ -1,7 +1,10 @@
 <html>
 <head>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"/>
+    <meta name="application-name" content="SM Overview Map" />
     <meta name="author" content="The1Killer" />
+    <meta name="generator" content="https://github.com/the1killer/sm_overview_ahk"/>
+    <link rel="icon" href="./favicon.png" type="image/png" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.6.0/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.6.0/dist/leaflet.js"></script>
     <style>
@@ -24,16 +27,18 @@
         var map = L.map("map", {
             crs: L.CRS.Simple,
             minZoom: minZoom,
-            maxZoom: maxZoom
+            maxZoom: maxZoom,
         })
+        map.attributionControl.addAttribution("<a target='_new' href='https://github.com/the1killer/sm_overview_ahk'>sm_overview_ahk By The1Killer</a>")
         try {
             var hash = new L.Hash(map);
             if(window.location.hash == null || window.location.hash == "") {
-                // map.setView([1500,1300],2);
-                map.setView([0,0],2);
+                // map.setView([0,0],2);
+                map.setView([-560,-540],2);
             }
         } catch (error) {
-            map.setView([0,0],2);
+            // map.setView([0,0],2);
+            map.setView([-560,-540],2);
         }
         L.tileLayer('./img/{x},{y}.jpg', {
             noWrap: true,
