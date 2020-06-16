@@ -16,7 +16,7 @@ SetWorkingDir %A_ScriptDir%  ; Ensures a consistent starting directory.
 #Include, drawbox.ahk
 
 quality:=2 ; lower is higher quality, but also slower because more images
-smalltest:=true ; set to true to run a 5x5 test, quick way to test your resultion, make sure to clear our your image folder
+smalltest:=false ; set to true to run a 5x5 test, quick way to test your resultion, make sure to clear our your image folder
 dirname:=".\html\img" ; NO TRAILING SLASH directory name for images, change if you dont want to overwrite your existing generation
 
 FileCreateDir, %dirname%
