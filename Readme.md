@@ -24,6 +24,7 @@ https://the1killer.github.io/scrapmechanicmap/
 1. Press 5 or 0 or any other empty slot on your toolbar to remove tool from view
 1. Hit Shit+F1 to start the script, Dont touch your mouse and keyboard until its done
 1. Will show a popup "Map Done!" when its finished
+1. Open html/index.html to view your map
 
 
 ## Some things to note

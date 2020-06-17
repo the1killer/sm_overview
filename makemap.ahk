@@ -28,10 +28,10 @@ ssY:=220
 ssWidth:=1000
 ssHeight:=1000
 ; for 1080p
-; ssX:=585
-; ssY:=165
-; ssWidth:=750
-; ssHeight:=750
+ssX:=585
+ssY:=165
+ssWidth:=750
+ssHeight:=750
 
 ; map coordinates max are -4000,-3000 to 4000,3000 make sure your jump amount and loops won't exceed this
 ; Progression calculator thats quick to calculate https://www.math10.com/en/algebra/arithmetic-progression.html#calc
