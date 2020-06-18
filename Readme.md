@@ -15,6 +15,8 @@ https://the1killer.github.io/scrapmechanicmap/
     - add /tp handler ~line 529, before block of commands starting with **elseif params[1] == "/clearpathnodes**
 1. Reload save if already in game.
 1. Set FOV to 90, see makemap.ahk for other quality settings (alternates for FOV 70 and 90)
+1. Use Borderless Window Mode, disable Depth of Field, recommended turn everything down to low besides view distance
+1. If you resolution is NOT 1080p look at lines 26-34 of the AHK file and change to suit your resolution or choose 1440p by commenting out the 1080p section
 1. Make sure Geforce Experience hotkey is **NOT alt+z**, this is so we can hide in game UI
 1. Make sure you have nothing in your toolbar 0 slot or 5 slot.... 
     - Sometimes the tp command hits 5 even though command is sent fine
