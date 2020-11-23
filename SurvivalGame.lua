@@ -3,7 +3,9 @@ dofile( "$SURVIVAL_DATA/Scripts/game/survival_harvestable.lua" )
 dofile( "$SURVIVAL_DATA/Scripts/game/survival_constants.lua" )
 dofile( "$SURVIVAL_DATA/Scripts/game/managers/ElevatorManager.lua"  )
 dofile( "$SURVIVAL_DATA/Scripts/game/managers/RespawnManager.lua" )
+dofile( "$SURVIVAL_DATA/Scripts/game/managers/BeaconManager.lua" )
 dofile( "$SURVIVAL_DATA/Scripts/game/managers/UnitManager.lua" )
+dofile( "$SURVIVAL_DATA/Scripts/game/managers/QuestManager.lua" )
 dofile( "$SURVIVAL_DATA/Scripts/game/util/Timer.lua" )
 
 dofile( "$SURVIVAL_DATA/Scripts/game/survival_units.lua" )
@@ -11,6 +13,9 @@ dofile( "$SURVIVAL_DATA/Scripts/game/survival_units.lua" )
 SurvivalGame = class( nil )
 SurvivalGame.enableLimitedInventory = true
 SurvivalGame.enableRestrictions = true
+SurvivalGame.enableFuelConsumption = true
+SurvivalGame.enableAmmoConsumption = true
+SurvivalGame.enableUpgradeCost = true
 
 local SyncInterval = 400 -- 400 ticks | 10 seconds
 
@@ -23,7 +28,7 @@ function SurvivalGame.server_onCreate( self )
 	if self.sv.saved == nil then
 		self.sv.saved = {}
 		self.sv.saved.data = self.data
-		print( "Seed:", string.format( "%.0f", self.sv.saved.data.seed ) )
+		printf( "Seed: %.0f", self.sv.saved.data.seed )
 		self.sv.saved.overworld = sm.world.createWorld( "$SURVIVAL_DATA/Scripts/game/worlds/Overworld.lua", "Overworld", { dev = self.sv.saved.data.dev }, self.sv.saved.data.seed )
 		self.storage:save( self.sv.saved )
 	end
@@ -43,8 +48,19 @@ function SurvivalGame.server_onCreate( self )
 	g_respawnManager = RespawnManager()
 	g_respawnManager:sv_onCreate( self.sv.saved.overworld )
 
+	g_beaconManager = BeaconManager()
+	g_beaconManager:sv_onCreate()
+
 	g_unitManager = UnitManager()
 	g_unitManager:sv_onCreate( self.sv.saved.overworld )
+
+	g_questManager = QuestManager()
+	g_questManager:sv_onCreate( self )
+	g_questManager:sv_activateQuest( quest_use_terminal )
+
+	if g_survivalDev then
+		g_questManager:sv_completeQuest( quest_pickup_logbook )
+	end
 
 	-- Game script managed global warehouse table
 	self.warehouses = sm.storage.load( STORAGE_CHANNEL_WAREHOUSES )
@@ -82,7 +98,7 @@ end
 
 function SurvivalGame.client_onCreate( self )
 	if true then
-		sm.game.bindChatCommand( "/ammo", { { "int", "quantity", true } }, "cl_onChatCommand", "Give ammo (default 40)" )
+		sm.game.bindChatCommand( "/ammo", { { "int", "quantity", true } }, "cl_onChatCommand", "Give ammo (default 50)" )
 		sm.game.bindChatCommand( "/spudgun", {}, "cl_onChatCommand", "Give the spudgun" )
 		sm.game.bindChatCommand( "/gatling", {}, "cl_onChatCommand", "Give the potato gatling gun" )
 		sm.game.bindChatCommand( "/shotgun", {}, "cl_onChatCommand", "Give the fries shotgun" )
@@ -104,7 +120,7 @@ function SurvivalGame.client_onCreate( self )
 		sm.game.bindChatCommand( "/timeofday", { { "number", "timeOfDay", true } }, "cl_onChatCommand", "Sets the time of the day as a fraction (0.5=mid day)" )
 		sm.game.bindChatCommand( "/timeprogress", { { "bool", "enabled", true } }, "cl_onChatCommand", "Enables or disables time progress" )
 		sm.game.bindChatCommand( "/day", {}, "cl_onChatCommand", "Disable time progression and set time to daytime" )
-		sm.game.bindChatCommand( "/spawn", { { "string", "unitName", true }, { "number", "unitGroup", true } }, "cl_onChatCommand", "Spawn a unit: 'woc', 'tapebot', 'totebot', 'haybot'" )
+		sm.game.bindChatCommand( "/spawn", { { "string", "unitName", true } }, "cl_onChatCommand", "Spawn a unit: 'woc', 'tapebot', 'totebot', 'haybot'" )
 		sm.game.bindChatCommand( "/harvestable", { { "string", "harvestableName", true } }, "cl_onChatCommand", "Create a harvestable: 'tree', 'stone'" )
 		sm.game.bindChatCommand( "/cleardebug", {}, "cl_onChatCommand", "Clear debug draw objects" )
 		sm.game.bindChatCommand( "/export", { { "string", "name", false } }, "cl_onChatCommand", "Exports blueprint $SURVIVAL_DATA/LocalBlueprints/<name>.blueprint" )
@@ -129,6 +145,9 @@ function SurvivalGame.client_onCreate( self )
 		sm.game.bindChatCommand( "/clearpathnodes", {}, "cl_onChatCommand", "Clear all path nodes in overworld" )
 		sm.game.bindChatCommand( "/enablepathpotatoes", { { "bool", "enable", true } }, "cl_onChatCommand", "Creates path nodes at potato hits in overworld and links to previous node" )
 
+		sm.game.bindChatCommand( "/activatequest",  { { "string", "uuid", true } }, "cl_onChatCommand", "Activate quest" )
+		sm.game.bindChatCommand( "/completequest",  { { "string", "uuid", true } }, "cl_onChatCommand", "Complete quest" )
+
 		--custom
 		sm.game.bindChatCommand( "/tp", { { "string", "x,y,z", false } }, "cl_onChatCommand", "Teleport to numerical position" )
 		sm.game.bindChatCommand( "/dir", { }, "cl_onChatCommand", "Tell you direction vector you are looking at." )
@@ -147,19 +166,39 @@ function SurvivalGame.client_onCreate( self )
 	end
 	g_respawnManager:cl_onCreate()
 
+	if g_beaconManager == nil then
+		assert( not sm.isHost )
+		g_beaconManager = BeaconManager()
+	end
+	g_beaconManager:cl_onCreate()
+
 	if g_unitManager == nil then
 		assert( not sm.isHost )
 		g_unitManager = UnitManager()
 	end
 	g_unitManager:cl_onCreate()
 
+	if g_questManager == nil then
+		assert( not sm.isHost )
+		g_questManager = QuestManager()
+	end
+	g_questManager:cl_onCreate()
+
 	-- Music effect
 	g_survivalMusic = sm.effect.createEffect( "SurvivalMusic" )
 	assert(g_survivalMusic)
+
+	-- Survival HUD
+	g_survivalHud = sm.gui.createSurvivalHudGui()
+	assert(g_survivalHud)
 end
 
 function SurvivalGame.client_onClientDataUpdate( self, clientData )
 	self.cl.time = clientData.time
+end
+
+function SurvivalGame.cl_n_questMsg( self, params )
+	g_questManager:cl_handleMsg( params )
 end
 
 function SurvivalGame.loadCraftingRecipes( self )
@@ -170,7 +209,6 @@ function SurvivalGame.loadCraftingRecipes( self )
 			dispenser = "$SURVIVAL_DATA/CraftingRecipes/dispenser.json",
 			cookbot = "$SURVIVAL_DATA/CraftingRecipes/cookbot.json",
 			craftbot = "$SURVIVAL_DATA/CraftingRecipes/craftbot.json",
-			undecided = "$SURVIVAL_DATA/CraftingRecipes/undecided.json",
 			dressbot = "$SURVIVAL_DATA/CraftingRecipes/dressbot.json"
 		}
 		g_craftingRecipes = {}
@@ -237,6 +275,7 @@ function SurvivalGame.server_onFixedUpdate( self, timeStep )
 
 	g_elevatorManager:sv_onFixedUpdate()
 	g_unitManager:sv_onFixedUpdate()
+	g_questManager:sv_onFixedUpdate()
 end
 
 function SurvivalGame.sv_updateClientData( self )
@@ -342,11 +381,6 @@ function SurvivalGame.cl_onChatCommand( self, params )
 				spawnParams.uuid = unit_farmbot
 			elseif params[2] then
 				spawnParams.uuid = sm.uuid.new( params[2] )
-			end
-
-			if params[3] then
-				spawnParams.unitParams = {}
-				spawnParams.unitParams.groupId = params[3]
 			end
 			self.network:sendToServer( "sv_spawnUnit", spawnParams )
 		end
@@ -527,9 +561,21 @@ function SurvivalGame.sv_onChatCommand( self, params, player )
 		for k,_ in pairs(_G) do
 			print( k )
 		end
-	elseif params[1] == "/dir" then
-		local dir = player.character:getDirection()
-		self.network:sendToClient( player, "client_showMessage", "x:"..dir.x.." y:"..dir.y.." z:"..dir.z)
+
+	elseif params[1] == "/activatequest" then
+		local uuid = params[2]
+		if uuid then
+			g_questManager:sv_activateQuest( uuid )
+		else
+			g_questManager:sv_activateAllQuests()
+		end
+	elseif params[1] == "/completequest" then
+		local uuid = params[2]
+		if uuid then
+			g_questManager:sv_completeQuest( uuid )
+		else
+			g_questManager:sv_completeAllQuests()
+		end
 	elseif params[1] == "/tp" then
 		local pos
 		if params[2] == "here" then
@@ -584,8 +630,7 @@ function SurvivalGame.server_onPlayerJoined( self, player, newPlayer )
 			--Hotbar
 			sm.container.setItem( inventory, 0, tool_sledgehammer, 1 )
 			sm.container.setItem( inventory, 1, tool_spudgun, 1 )
-			sm.container.setItem( inventory, 6, obj_plantables_potato, 20 )
-			sm.container.setItem( inventory, 7, obj_plantables_potato, 20 )
+			sm.container.setItem( inventory, 7, obj_plantables_potato, 50 )
 			sm.container.setItem( inventory, 8, tool_lift, 1 )
 			sm.container.setItem( inventory, 9, tool_connect, 1 )
 
@@ -607,9 +652,38 @@ function SurvivalGame.server_onPlayerJoined( self, player, newPlayer )
 			sm.world.loadWorld( self.sv.saved.overworld )
 		end
 		self.sv.saved.overworld:loadCell( math.floor( spawnPoint.x/64 ), math.floor( spawnPoint.y/64 ), player, "sv_createNewPlayer" )
+	else
+		local inventory = player:getInventory()
+
+		local sledgehammerCount = sm.container.totalQuantity( inventory, tool_sledgehammer )
+		if sledgehammerCount == 0 then
+			sm.container.beginTransaction()
+			sm.container.collect( inventory, tool_sledgehammer, 1 )
+			sm.container.endTransaction()
+		elseif sledgehammerCount > 1 then
+			sm.container.beginTransaction()
+			sm.container.spend( inventory, tool_sledgehammer, sledgehammerCount - 1 )
+			sm.container.endTransaction()
+		end
+
+		local liftCount = sm.container.totalQuantity( inventory, tool_lift )
+		if liftCount == 0 then
+			sm.container.beginTransaction()
+			sm.container.collect( inventory, tool_lift, 1 )
+			sm.container.endTransaction()
+		elseif liftCount > 1 then
+			sm.container.beginTransaction()
+			sm.container.spend( inventory, tool_lift, liftCount - 1 )
+			sm.container.endTransaction()
+		end
 	end
-	g_respawnManager:sv_onPlayerJoined( player )
 	g_unitManager:sv_onPlayerJoined( player )
+	g_questManager:sv_onPlayerJoined( player )
+end
+
+function SurvivalGame.server_onPlayerLeft( self, player )
+	print( player.name, "left the game" )
+	g_elevatorManager:sv_onPlayerLeft( player )
 end
 
 function SurvivalGame.sv_e_saveWarehouses( self )
@@ -699,18 +773,10 @@ function SurvivalGame.sv_e_createElevatorDestination( self, params )
 					sm.portal.addWorldPortalHook( warehouse.world, name, params.portal )
 					print( "Added portal hook '"..name.."' in world "..warehouse.world.id )
 
-					for _,object in ipairs( params.portal:getContentsA() ) do
-						if type( object ) == "Character" then
-							local player = object:getPlayer()
-							if player then
-								print( "Loading cell", cell.x..", "..cell.y, "in world", warehouse.world.id )
-								warehouse.world:loadCell( cell.x, cell.y, player, "sv_e_elevatorCellLoaded" )
-							end
-						end
-					end
+					g_elevatorManager:sv_loadBForPlayersInElevator( params.portal, warehouse.world, cell.x, cell.y )
 				end
 			else
-				print( "No exit hint found, this elevator is going nowhere!" )
+				sm.log.error( "No exit hint found, this elevator is going nowhere!" )
 			end
 			return
 		else
@@ -750,18 +816,13 @@ function SurvivalGame.sv_e_createElevatorDestination( self, params )
 	sm.portal.addWorldPortalHook( world, name, params.portal )
 	print( "Added portal hook '"..name.."' in world "..world.id )
 
-	print( "Contents A:" )
-	print( params.portal:getContentsA() )
+	g_elevatorManager:sv_loadBForPlayersInElevator( params.portal, world, 0, 0 )
+end
 
-	for _,object in ipairs( params.portal:getContentsA() ) do
-		if type( object ) == "Character" then
-			local player = object:getPlayer()
-			if player then
-				print( "Loading cell 0, 0 in world", world.id )
-				world:loadCell( 0, 0, player, "sv_e_elevatorCellLoaded" )
-			end
-		end
-	end
+function SurvivalGame.sv_e_elevatorEvent( self, params )
+	print( "SurvivalGame.sv_e_elevatorEvent" )
+	print( params )
+	g_elevatorManager[params.fn]( g_elevatorManager, params )
 end
 
 function SurvivalGame.sv_createNewPlayer( self, world, x, y, player )
@@ -776,20 +837,6 @@ function SurvivalGame.sv_recreatePlayerCharacter( self, world, x, y, player, par
 	player:setCharacter( newCharacter )
 	print( "Recreate character in new world" )
 	print( params )
-end
-
-function SurvivalGame.sv_e_prepareCell( self, params )
-	if not sm.exists( params.world ) then
-		sm.world.loadWorld( params.world )
-	end
-	for _,player in ipairs( params.players ) do
-		print( "Loading cell", params.cellX..", "..params.cellY, "in world", params.world.id, "for player", player )
-		params.world:loadCell( params.cellX, params.cellY, player, "sv_e_elevatorCellLoaded" )
-	end
-end
-
-function SurvivalGame.sv_e_elevatorCellLoaded( self, world, x, y, player )
-	print( "SurvivalGame: World "..world.id.." cell ("..x..","..y..") loaded for player "..player.id )
 end
 
 function SurvivalGame.sv_e_respawn( self, params )
@@ -811,6 +858,15 @@ function SurvivalGame.sv_loadedRespawnCell( self, world, x, y, player )
 	g_respawnManager:sv_respawnCharacter( player, world )
 end
 
+function SurvivalGame.sv_e_onSpawnPlayerCharacter( self, player )
+	if player.character and sm.exists( player.character ) then
+		g_respawnManager:sv_onSpawnCharacter( player )
+		g_beaconManager:sv_onSpawnCharacter( player )
+	else
+		sm.log.warning("SurvivalGame.sv_e_onSpawnPlayerCharacter for a character that doesn't exist")
+	end
+end
+
 function SurvivalGame.sv_e_markBag( self, params )
 	if sm.exists( params.world ) then
 		sm.event.sendToWorld( params.world, "sv_e_markBag", params )
@@ -824,5 +880,30 @@ function SurvivalGame.sv_e_unmarkBag( self, params )
 		sm.event.sendToWorld( params.world, "sv_e_unmarkBag", params )
 	else
 		sm.log.warning("SurvivalGame.sv_e_unmarkBag in a world that doesn't exist")
+	end
+end
+
+-- Beacons
+function SurvivalGame.sv_e_createBeacon( self, params )
+	if sm.exists( params.beacon.world ) then
+		sm.event.sendToWorld( params.beacon.world, "sv_e_createBeacon", params )
+	else
+		sm.log.warning( "SurvivalGame.sv_e_createBeacon in a world that doesn't exist" )
+	end
+end
+
+function SurvivalGame.sv_e_destroyBeacon( self, params )
+	if sm.exists( params.beacon.world ) then
+		sm.event.sendToWorld( params.beacon.world, "sv_e_destroyBeacon", params )
+	else
+		sm.log.warning( "SurvivalGame.sv_e_destroyBeacon in a world that doesn't exist" )
+	end
+end
+
+function SurvivalGame.sv_e_unloadBeacon( self, params )
+	if sm.exists( params.beacon.world ) then
+		sm.event.sendToWorld( params.beacon.world, "sv_e_unloadBeacon", params )
+	else
+		sm.log.warning( "SurvivalGame.sv_e_unloadBeacon in a world that doesn't exist" )
 	end
 end
