@@ -15,6 +15,7 @@ SetWorkingDir %A_ScriptDir%  ; Ensures a consistent starting directory.
 
 #Include, drawbox.ahk
 
+overwriteexisting:=false ; false to skip existing files, which makes process resumeable or to easily regenerate bad tiles (after you manually delete the bad images)
 quality:=2 ; lower is higher quality, but also slower because more images
 smalltest:=false ; set to true to run a 5x5 test, quick way to test your resultion, make sure to clear our your image folder
 dirname:=".\html\img" ; NO TRAILING SLASH directory name for images, change if you dont want to overwrite your existing generation
@@ -99,25 +100,26 @@ return
         teleport(x,y)
         Sleep, 3000
         Loop, %xloop% {
-
-            teleport(x,y)
-            Sleep, 4000 ; Change this delay if your machine takes a while to load the tiles after teleporting
-            teleport(x,y)
-            Send {Alt Down}
-            Sleep 50
-            Send Z
-            Sleep 50
-            Send {Alt Up}
-            Sleep, 300
-            takeScreenshot(ix,iy)
-            Sleep, 500
-            Send {Alt Down}
-            Sleep 50
-            Send Z
-            Sleep 150
-            Send {Alt Up}
-            Sleep 50
-
+            File2 := dirname "\" ix "," iy ".jpg"
+            if (overwriteexisting || !FileExist(File2)){
+                teleport(x,y)
+                Sleep, 4000 ; Change this delay if your machine takes a while to load the tiles after teleporting
+                teleport(x,y)
+                Send {Alt Down}
+                Sleep 50
+                Send Z
+                Sleep 50
+                Send {Alt Up}
+                Sleep, 300
+                takeScreenshot(ix,iy)
+                Sleep, 500
+                Send {Alt Down}
+                Sleep 50
+                Send Z
+                Sleep 150
+                Send {Alt Up}
+                Sleep 50
+            }
             ; Sleep, 500
             x := x + jump
             ix := ix + 1
