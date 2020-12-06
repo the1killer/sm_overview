@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.html",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "supervisor index.js"
   },
   "repository": {
     "type": "git",
@@ -18,5 +19,8 @@
   "homepage": "https://github.com/the1killer/scrapmechanicmap#readme",
   "dependencies": {
     "leaflet-hash": "^0.2.1"
+  },
+  "devDependencies": {
+    "express": "^4.17.1"
   }
 }
