@@ -4,89 +4,23 @@ SMCellParser = (function() {
     const parse = function(json) {
         var cells = new Array();
         var x=0,y=0;
-        // var yMax = Math.abs(json.bounds.yMax - json.bounds.yMin);
-        // var xMax = Math.abs(json.bounds.xMax - json.bounds.xMin);
-        // for (var cellY = 0; cellY <= yMax + 10; cellY++) {
-        //     for (var cellX = 0; cellX <= xMax + 10; cellX++) {
-        // for (var cellY = json.bounds.yMin; cellY <= json.bounds.yMax + 1; cellY++) {
-        //     for (var cellX = json.bounds.xMin; cellX <= json.bounds.xMax + 1; cellX++) {
-        var spanX = json.bounds.xMax - json.bounds.xMin;
-        var spanY = json.bounds.yMax - json.bounds.yMin;
-        console.log("span: ",spanX,spanY);
-        // for (var cellY = json.bounds.yMin; cellY <= json.bounds.yMax + 1; cellY++) {
-        //     for (var cellX = json.bounds.xMin; cellX <= json.bounds.xMax + 1; cellX++) {
-        var y=0,x=0;
-        var vals = [];
-        for (var cellY = 0; cellY <= 55; cellY++) {
-            for (var cellX = 0; cellX <= 55; cellX++) {
-                vals.push({cx:cellX,cy:cellY,x:x,y:y});
-                x+=1;
-            }
-            x=0;
-            y+=1;
-        }
-        x=0;
-        // for (var cellY = -56; cellY <= -1; cellY++) {
-        for (var cellY = -1; cellY <= -56; cellY--) {
-            for (var cellX = 0; cellX <= 55; cellX++) {
-                vals.push({cx:cellX,cy:cellY,x:x,y:y});
-                console.log(cellX,cellY)
-                x+=1;
-            }
-            x=0;
-            y+=1;
-        }
+        json.forEach((cell) => {
+                // var cellX = coord.cx,cellY = coord.cy;
+                // var x = coord.x,y = coord.y;
+                // var cell = {};
+                // cell.x = cellX;
+                // cell.y = cellY;
+                // cell.xidx = x;
+                // cell.yidx = y;
 
-        // var yVals = [];
-        // var xVals = [];
-        // for (var cellY = 0; cellY <= json.bounds.yMax; cellY++) {
-        //     yVals.push(cellY);
-        // }
-        // for (var cellX = 0; cellX <= json.bounds.xMax; cellX++) {
-        //     xVals.push(cellX);
-        // }
-
-        // for (var cellY = 0; cellY <= json.bounds.yMax; cellY++) {
-        //     yVals.push(cellY);
-        // }
-        // for (var cellX = -1; cellX >= json.bounds.xMin; cellX--) {
-        //     xVals.push(cellX);
-        // }
-        // for (var cellY = -1; cellY >= json.bounds.yMin; cellY--) {
-        //     yVals.push(cellY);
-        // }
-        // for (var cellX = -1; cellX >= json.bounds.xMin; cellX--) {
-        //     xVals.push(cellX);
-        // }
-
-        // for (var cellY = json.bounds.yMin; cellY <= json.bounds.yMax; cellY++) {
-        //     yVals.push(cellY);
-        // }
-        // for (var cellX = json.bounds.xMin; cellX <= json.bounds.xMax; cellX++) {
-        //     xVals.push(cellX);
-        // }
-        // for (var cellY = 0; cellY <= json.bounds.yMax; cellY++) {
-        //     for (var cellX = 0; cellX <= json.bounds.xMax; cellX++) {
-        // yVals.forEach((cellY)=> {
-        //     xVals.forEach((cellX) => {
-        // for (var cellY = json.bounds.yMin; cellY <= json.bounds.yMax; cellY++) {
-        //     for (var cellX = json.bounds.xMin; cellX <= json.bounds.xMax; cellX++) {
-        vals.forEach((coord) => {
-                var cellX = coord.cx,cellY = coord.cy;
-                var x = coord.x,y = coord.y;
-                var cell = {};
-                cell.x = cellX;
-                cell.y = cellY;
-                cell.xidx = x;
-                cell.yidx = y;
                 // if(y%10 == 0) {
                 //     console.log(cellX,cellY,x,y);
                 // }
                 
                 // var xLookup = cellX;
                 // var yLookup = cellY;
-                var xLookup = x;
-                var yLookup = y;
+                var xLookup = cell.x;
+                var yLookup = cell.y;
                 // if(xLookup < 0) {
                 //     xLookup = x;
                 //     // xLookup = spanX - xLookup;
@@ -97,21 +31,22 @@ SMCellParser = (function() {
                 // }
 
                 try {
-                    cell.tileId = json.tileId[yLookup][xLookup];
-                    let pt = getPoiType(cell.tileId);
+                    // cell.tileId = json.tileId[yLookup][xLookup];
+                    let pt = getPoiType(cell.tileid);
                     if(pt) {
                         cell.poiType = pt;
                     }
                 } catch (err) {
+                    console.log(err)
                     // console.log("tileId not found for "+x+","+y);
                 }
+                // try {
+                //     cell.cellDebug = json.cellDebug[yLookup][xLookup];
+                // } catch (err) {
+                //     // console.log("cellDebug not found for "+x+","+y);
+                // }
                 try {
-                    cell.cellDebug = json.cellDebug[yLookup][xLookup];
-                } catch (err) {
-                    // console.log("cellDebug not found for "+x+","+y);
-                }
-                try {
-                    cell.flags = json.flags[yLookup][xLookup];
+                    // cell.flags = json.flags[yLookup][xLookup];
                     var ctype = getCellType(cell.flags)
                     cell.type = TypeTags[ctype];
                     // if cellX >= -46 and cellX < -46 + 20 and cellY >= -46 and cellY < -46 + 16 then
@@ -122,32 +57,36 @@ SMCellParser = (function() {
                     // console.log(err);
                     // exit();
                 }
+                // try {
+                //     cell.rotation = json.rotation[yLookup][xLookup];
+                // } catch (err) {
+                //     // console.log("rotation not found for "+x+","+y);
+                // }
+                // try {
+                //     cell.elevation = json.elevation[yLookup][xLookup];
+                // } catch (err) {
+                //     // console.log("elevation not found for "+x+","+y);
+                // }
+                // try {
+                //     cell.cornerDebug = json.cornerDebug[yLookup][xLookup];
+                // } catch (err) {
+                //     // console.log("cornerDebug not found for "+x+","+y);
+                // }
+                // try {
+                //     cell.tileOffsetX = json.tileOffsetX[yLookup][xLookup];
+                // } catch (err) {
+                //     // console.log("tileOffsetX not found for "+x+","+y);
+                // }
+                // try {
+                //     cell.tileOffsetY = json.tileOffsetY[yLookup][xLookup];
+                // } catch (err) {
+                //     // console.log("tileOffsetY not found for "+x+","+y);
+                // }
                 try {
-                    cell.rotation = json.rotation[yLookup][xLookup];
+                    cell.roads = getCellRoads(cell.flags)
                 } catch (err) {
-                    // console.log("rotation not found for "+x+","+y);
+                    console.log(err)
                 }
-                try {
-                    cell.elevation = json.elevation[yLookup][xLookup];
-                } catch (err) {
-                    // console.log("elevation not found for "+x+","+y);
-                }
-                try {
-                    cell.cornerDebug = json.cornerDebug[yLookup][xLookup];
-                } catch (err) {
-                    // console.log("cornerDebug not found for "+x+","+y);
-                }
-                try {
-                    cell.tileOffsetX = json.tileOffsetX[yLookup][xLookup];
-                } catch (err) {
-                    // console.log("tileOffsetX not found for "+x+","+y);
-                }
-                try {
-                    cell.tileOffsetY = json.tileOffsetY[yLookup][xLookup];
-                } catch (err) {
-                    // console.log("tileOffsetY not found for "+x+","+y);
-                }
-                
 
                 // console.log("x:"+cellX+", y:"+cellY)
                 // console.log(cell);
@@ -185,6 +124,26 @@ SMCellParser = (function() {
             return POIS[poiType]
         }
         return null
+    }
+
+    function getCellRoads(flags) {
+        let roadflags = flags & MASK_ROADS;
+        let roads = "";
+        if(roadflags & FLAG_ROAD_N) {
+            roads += "N"
+        }
+        if(roadflags & FLAG_ROAD_S) {
+            roads += "S"
+        }
+        if(roadflags & FLAG_ROAD_E) {
+            roads += "E"
+        }
+        if(roadflags & FLAG_ROAD_W) {
+            roads += "W"
+        }
+        if (roads != "") {
+            return roads;
+        }
     }
 
     // ////////////////////////////////////////////////////////////////////////////////
@@ -308,6 +267,8 @@ SMCellParser = (function() {
 
     POIS[1] = "POI_RANDOM_PLACEHOLDER"
     POIS[99] = "POI_TEST"
+
+    
 
     return {
         parse

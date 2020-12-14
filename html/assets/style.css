@@ -1,0 +1,132 @@
+html, body, #map {
+    width:100%;
+    height:100%;
+    margin:0;
+    padding:0;
+    background-color: #B0B0B0
+}
+.cell {
+    font-size: 0.4em;
+    word-break: break-all;
+}
+.innercell {
+    padding: 0.4em;
+}
+.meadow {
+    background-color: #00E85D;
+}
+.lake {
+    background-color: #00BAF2;
+}
+.autumnforest {
+    background-color: #F2BB07;
+}
+.autumnforest {
+    background-color: #F2BB07;
+}
+.forest {
+    background-color: #00BC1B;
+}
+.burntforest {
+    background-color: #9E8A5C;
+}
+.mountain {
+    background-color: #8DBFAC;
+}
+.desert {
+    background-color: #FFDE93;
+}
+.field {
+    background-color: #A4E07E;
+}
+.gridLayer {
+    z-index: 10 !important;
+}
+.none {
+    background-color: #00FF8F;
+}
+.road-N {
+    position: absolute;
+    top: 0;
+    left: 45%;
+    height: 50%;
+    width: 2em;
+    background-color: #999;
+    text-align: center;
+    display: flex;
+    align-items: center;
+}
+.road-S {
+    position: absolute;
+    bottom: 0;
+    left: 45%;
+    height: 50%;
+    width: 2em;
+    background-color: #999;
+    text-align: center;
+    display: flex;
+    align-items: center;
+}
+.road-E {
+    position: absolute;
+    right: 0;
+    bottom: 45%;
+    width: 50%;
+    height: 2em;
+    background-color: #999;
+    text-align: center;
+}
+.road-W {
+    position: absolute;
+    left: 0;
+    bottom: 45%;
+    width: 50%;
+    height: 2em;
+    background-color: #999;
+    text-align: center;
+}
+.roadLine {
+    position: absolute;
+}
+.road-W .roadLine, .road-E .roadLine {
+    top: 49%;
+    width: 100%;
+    height: 1px;
+    border-top: 0.5px dashed yellow;
+}
+.road-N .roadLine, .road-S .roadLine {
+    left: 49%;
+    height: 100%;
+    width: 1px;
+    border-left: 0.5px dashed yellow;
+}
+
+.rotLabel {
+    position: absolute;
+    bottom: 0;
+}
+.rot-1 {
+    transform: rotate(270deg);
+}
+.rot-2 {
+    transform: rotate(180deg);
+}
+.rot-3 {
+    transform: rotate(90deg);
+}
+
+.tileid {
+    position: absolute;
+    bottom: 0;
+    right: 3;
+}
+.tileimg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    right: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0.85;
+}

@@ -6,6 +6,7 @@ const app = express();
 const port = 8080;
 
 app.use('/assets',express.static('assets')); //host static assets
+app.use('/img',express.static('img')); //host map imgs
 app.use('/libs',express.static('libs')); //host static assets
 
 app.get('/', (req, res) => {
