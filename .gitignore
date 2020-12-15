@@ -2,3 +2,5 @@ html/node_modules
 html/img/*
 scale.txt
 testmakemap.ahk
+g_celldata.json
+g_celldata0.json
