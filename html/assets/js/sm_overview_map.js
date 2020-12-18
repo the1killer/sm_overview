@@ -1,4 +1,7 @@
-
+//
+// SM Overview Map
+// v1.0.0
+//
 let SMOverviewMap;
 SMOverviewMap = (function() {
     var celljson = "";
@@ -42,6 +45,15 @@ SMOverviewMap = (function() {
         }
     });
 
+    var markerIcon = L.icon({
+        iconUrl: './assets/img/marker.png',
+        shadowUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png',
+        // iconSize: [38,84],
+        iconSize: [20,44],
+        iconAnchor: [9,44],
+        popupAnchor: [0,-50]
+    })
+
     L.tileLayer.offsetTileLayer = function(opts) {
         return new L.TileLayer.OffsetTileLayer(opts);
     };
@@ -81,6 +93,9 @@ SMOverviewMap = (function() {
         // var lakeTypes = {}
         var poiCoords = [];
         // var cells = {};
+        var stats = "";
+        var typeCounts = [];
+        var poiCounts = [];
         celldata.forEach((cell) => {
             if(cells[cell.x] == undefined) {
                 cells[cell.x] = {};
@@ -89,6 +104,10 @@ SMOverviewMap = (function() {
             if(cell.poiType) {
                 poiCoords.push([cell.x,cell.y]);
             }
+            if(typeCounts[cell.type] == undefined) {
+                typeCounts[cell.type] = 0;
+            }
+            typeCounts[cell.type] += 1;
             // if(cell.type == 'LAKE') {
             //     var id = cell.tileid;
             //     if(lakeTypes[id] == undefined) {
@@ -98,12 +117,28 @@ SMOverviewMap = (function() {
             //     }
             // }
         })
+        stats += `<div class="stat-title">Cell Types:</div><table>`
+        Object.keys(typeCounts).forEach((t) => {
+            var name = t;
+            if(name == "NONE") {name = "NONE (Road/Cliff)"}
+            stats += `<tr><td>${name}:</td><td>${typeCounts[t]} (${Math.floor((typeCounts[t] / celldata.length) * 100)}%)</td></tr>`
+        })
+        stats += "</table>"
         // console.log(JSON.stringify(lakeTypes))
 
+        var poisSum = 0;
         poiCoords.forEach((coord) => {
             let x=coord[0],y=coord[1];
             let cell = cells[x][y];
             if(cell.poiType && cell.foundPoi == undefined) {
+                if(poiCounts[cell.poiType] == undefined) {
+                    poiCounts[cell.poiType] = 0;
+                }
+                // if(cell.poiType != "POI_CRASHSITE_AREA") {
+                    poiCounts[cell.poiType] += 1;
+                    poisSum += 1;
+                // }
+
                 let size = POI_SIZES[cell.poiType]
                 if(size != undefined) {
                     // console.log(`found ${cell.poiType} at ${x},${y} with size ${size} with tile id ${cell.tileid}`)
@@ -167,6 +202,28 @@ SMOverviewMap = (function() {
             }
         })
 
+        var sortedKeys = Object.keys(poiCounts).sort(function(a,b) {
+            return ( poiCounts[a] > poiCounts[b] ) ? -1 : 1;
+        })
+
+        stats += `<div class="stat-title">POI Types: </spdivan><table>`
+        sortedKeys.forEach((t) => {
+            stats += `<tr><td>${t}:</td><td>${poiCounts[t]} (${Math.floor((poiCounts[t] / poisSum) * 100)}%)</td></tr>`
+        })
+        stats += "</table><br/><br/>"
+
+        document.getElementById("stats-content").innerHTML = stats;
+        document.getElementById("stats-toggle").addEventListener('click',function(event){
+            var content = document.getElementById("stats-content")
+            if(content.classList.contains('collapsed')) {
+                content.classList.remove("collapsed")
+                document.getElementById("stats").classList.add("scroll-y")
+            } else {
+                content.classList.add("collapsed")
+                document.getElementById("stats").classList.remove("scroll-y")
+            }
+            event.preventDefault();
+        })
         
         L.GridLayer.DebugCoords = L.GridLayer.extend({
             createTile: function (coords) {
@@ -259,7 +316,7 @@ SMOverviewMap = (function() {
         // L.control.layers({"Grid": myGridLayer}, {"Img":tileLayer}).addTo(map);
     };
 
-    let init = function() {
+    let init = function(inputjson) {
         // create the map
         map = L.map("map", {
             crs: L.CRS.Simple,
@@ -284,7 +341,11 @@ SMOverviewMap = (function() {
             // map.setView([-3563,-3746],0);
         }
 
+        if(inputjson) {
+            loadCells(JSON.parse(inputjson));
+        } else {
         loadFile("./assets/json/cells.json",loadCells);
+        }
 
         map.on('click', function(e) {
             // console.log(JSON.stringify(e));
@@ -299,7 +360,8 @@ SMOverviewMap = (function() {
             if(clickmarker) {
                 clickmarker.remove();
             }
-            clickmarker = L.marker([e.latlng.lat, e.latlng.lng]).addTo(map);
+            clickmarker = L.marker([e.latlng.lat, e.latlng.lng], {icon: markerIcon}).addTo(map);
+            // clickmarker = L.marker([e.latlng.lat, e.latlng.lng]).addTo(map);
             clickmarker.bindPopup(contentForMarker(x,y))
             clickmarker.openPopup();
             // console.log("layer point:", Math.floor(e.layerPoint.x),Math.floor(e.layerPoint.y));
