@@ -40,6 +40,8 @@ function SurvivalGame.server_onCreate( self )
 		g_survivalDev = true
 	end
 
+	g_survivalDev = true
+
 	self:loadCraftingRecipes()
 
 	g_elevatorManager = ElevatorManager()
@@ -149,6 +151,7 @@ function SurvivalGame.client_onCreate( self )
 		sm.game.bindChatCommand( "/completequest",  { { "string", "uuid", true } }, "cl_onChatCommand", "Complete quest" )
 
 		--custom
+		sm.game.bindChatCommand( "/cell", { { "string", "x,y,z", false } }, "cl_onChatCommand", "Teleport to numerical cell position" )
 		sm.game.bindChatCommand( "/tp", { { "string", "x,y,z", false } }, "cl_onChatCommand", "Teleport to numerical position" )
 		sm.game.bindChatCommand( "/dir", { }, "cl_onChatCommand", "Tell you direction vector you are looking at." )
 	end
@@ -576,12 +579,49 @@ function SurvivalGame.sv_onChatCommand( self, params, player )
 		else
 			g_questManager:sv_completeAllQuests()
 		end
+	elseif params[1] == "/cell" then
+		local pos
+		if params[2] == "here" then
+			pos = player.character:getWorldPosition()
+			local cellX, cellY = math.floor( pos.x/64 ), math.floor( pos.y/64 )
+			print("x:"..cellX.." y:"..cellY)
+			self.network:sendToClient( player, "client_showMessage", "x:"..cellX.." y:"..cellY.." z:"..math.floor(pos.z) )
+			--self.network:sendToClient( player, "client_showMessage", "looking x:"..dir.x.." y:"..dir.y.." z:"..dir.z )
+			return
+		else
+			if params[2] ~= nil then
+				local cellX,cellY,z = params[2]:match("([^,]+),([^,]+),([^,]+)")
+				local x = cellX * 64
+				local y = cellY * 64
+				x = x + 32
+				y = y + 32
+				pos = sm.vec3.new( tonumber(x),tonumber(y),tonumber(z) )
+			else
+				self.network:sendToClient( player, "client_showMessage", "Usage: /tp x,y,z or /tp here to see current coords" )
+			end
+		end
+		if pos then
+			local cellX, cellY = math.floor( pos.x/64 ), math.floor( pos.y/64 )
+			print("x:"..cellX.." y:"..cellY)
+			local dir = player.character:getDirection()
+			dir.x = 0
+			dir.y = 1
+			dir.z = -1
+			self.sv.saved.overworld:loadCell( cellX, cellY, player, "sv_recreatePlayerCharacter", { pos = pos, dir = dir } )
+
+		end
 	elseif params[1] == "/tp" then
 		local pos
 		if params[2] == "here" then
 			pos = player.character:getWorldPosition()
 			local dir = player.character:getDirection()
 			self.network:sendToClient( player, "client_showMessage", "x:"..math.floor(pos.x).." y:"..math.floor(pos.y).." z:"..math.floor(pos.z) )
+			--self.network:sendToClient( player, "client_showMessage", "looking x:"..dir.x.." y:"..dir.y.." z:"..dir.z )
+			return
+		elseif params[2] == "cell" then
+			pos = player.character:getWorldPosition()
+			local cellX, cellY = math.floor( pos.x/64 ), math.floor( pos.y/64 )
+			self.network:sendToClient( player, "client_showMessage", "x:"..cellX.." y:"..cellY )
 			--self.network:sendToClient( player, "client_showMessage", "looking x:"..dir.x.." y:"..dir.y.." z:"..dir.z )
 			return
 		else
