@@ -88,11 +88,14 @@ function load()
 
 			cells[#cells+1] = cell
 		end )
-		print("Writing Cell Json");
-		sm.json.save( cells, "$SURVIVAL_DATA/".."cells.json" )
-		cells = nil;
-		print("Wrote Cell Json");
-		-- sm.json.save( g_cellData, "$SURVIVAL_DATA/".."g_celldata"..g_jsoncount..".json" )
+		if #cells > 0 then
+			cells[1]["bounds"] = g_cellData.bounds
+			cells[1]["seed"] = g_cellData.seed
+			print("Writing Cell Json");
+			sm.json.save( cells, "$SURVIVAL_DATA/".."cells.json" )
+			cells = nil;
+			print("Wrote Cell Json");
+		end
 
 		return true
 	end
