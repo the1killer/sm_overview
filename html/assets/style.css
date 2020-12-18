@@ -158,8 +158,12 @@ html, body, #map {
 .toggle {
     float: right;
     font-size: 0.9em;
+    max-width: 80hw;
 }
 #stats-content td {
     font-size: 0.8em;
     font-family: 'Roboto', sans-serif;
+}
+.poilabel {
+    font-size: 0.75em;
 }

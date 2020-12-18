@@ -118,7 +118,11 @@ SMOverviewMap = (function() {
             // }
         })
         stats += `<div class="stat-title">Cell Types:</div><table>`
-        Object.keys(typeCounts).forEach((t) => {
+
+        var sortedKeys = Object.keys(typeCounts).sort(function(a,b) {
+            return ( typeCounts[a] > typeCounts[b] ) ? -1 : 1;
+        })
+        sortedKeys.forEach((t) => {
             var name = t;
             if(name == "NONE") {name = "NONE (Road/Cliff)"}
             stats += `<tr><td>${name}:</td><td>${typeCounts[t]} (${Math.floor((typeCounts[t] / celldata.length) * 100)}%)</td></tr>`
@@ -206,7 +210,7 @@ SMOverviewMap = (function() {
             return ( poiCounts[a] > poiCounts[b] ) ? -1 : 1;
         })
 
-        stats += `<div class="stat-title">POI Types: </spdivan><table>`
+        stats += `<div class="stat-title">POI Types: </div><table>`
         sortedKeys.forEach((t) => {
             stats += `<tr><td>${t}:</td><td>${poiCounts[t]} (${Math.floor((poiCounts[t] / poisSum) * 100)}%)</td></tr>`
         })
@@ -250,7 +254,7 @@ SMOverviewMap = (function() {
                     // div.innerHTML = cell.type;
                     tile.classList.add(cell.type.toLowerCase())
                     if(cell.poiType && cell.type == 'LAKE') {
-                        div.innerHTML += "<br/><small>"+cell.poiType+"</small>"
+                        div.innerHTML += "<br/><span class='poilabel'>"+cell.poiType+"</span>"
                         // div.innerHTML += "<div class='tileid'>"+cell.tileid+"</div>"
                     }
                     // div.innerHTML += "<div class='rotLabel'>R:"+cell.rotation+"</div>"
@@ -333,12 +337,10 @@ SMOverviewMap = (function() {
         try {
             var hash = new L.Hash(map);
             if(window.location.hash == null || window.location.hash == "") {
-                map.setView([0,0],0);
-                // map.setView([-3563,-3746],0);
+                map.setView([-848,-858],1);
             }
         } catch (error) {
-            map.setView([0,0],0);
-            // map.setView([-3563,-3746],0);
+            map.setView([-848,-858],1);
         }
 
         if(inputjson) {
