@@ -1,77 +1,28 @@
 <html>
-<head>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"/>
-    <meta name="application-name" content="SM Overview Map" />
-    <meta name="author" content="The1Killer" />
-    <meta name="generator" content="https://github.com/the1killer/sm_overview_ahk"/>
-    <link rel="icon" href="./favicon.png" type="image/png" />
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.6.0/dist/leaflet.css" />
-    <script src="https://unpkg.com/leaflet@1.6.0/dist/leaflet.js"></script>
-    <style>
-        html, body, #map {
-          width:100%;
-          height:100%;
-          margin:0;
-          padding:0;
-          background-color: #B0B0B0
-        }
-      </style>
-</head>
-<body>
-    <div id="map"></div>
-    <script src="libs/leaflet-hash.js"></script>
-    <script type="text/javascript">
-        var minZoom = 0
-        var maxZoom = 5
-        // create the map
-        var map = L.map("map", {
-            crs: L.CRS.Simple,
-            minZoom: minZoom,
-            maxZoom: maxZoom,
-        })
-        map.attributionControl.addAttribution("<a target='_new' href='https://github.com/the1killer/sm_overview_ahk'>sm_overview_ahk By The1Killer</a>")
-        try {
-            var hash = new L.Hash(map);
-            if(window.location.hash == null || window.location.hash == "") {
-                // map.setView([0,0],2);
-                map.setView([-560,-540],2);
-            }
-        } catch (error) {
-            // map.setView([0,0],2);
-            map.setView([-560,-540],2);
-        }
-        L.tileLayer('./img/{x},{y}.jpg', {
-            noWrap: true,
-            maxNativeZoom: 1,
-            minNativeZoom: 1,
-            tileSize:128,
-            // tileSize: 1000
-        }).addTo(map)
+    <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"/>
+        <meta name="application-name" content="SM Overview Map" />
+        <meta name="author" content="The1Killer" />
+        <meta name="generator" content="https://github.com/the1killer/sm_overview_ahk"/>
+        <link rel="icon" href="./assets/img/favicon.png" type="image/png" />
+        <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+        <link rel="stylesheet" href="./assets/style.css" />
+        <script src="https://cdn.jsdelivr.net/npm/leaflet@1.7.1/dist/leaflet-src.min.js"></script>
+        <script src="libs/leaflet-hash.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.min.js"></script>
+        <script src="assets/js/cellparser.js"></script>
+        <link rel="preconnect" href="https://fonts.gstatic.com">
+        <link href="https://fonts.googleapis.com/css2?family=Lato&family=Roboto:wght@300;400&&display=swap" rel="stylesheet">
+    </head>
+    <body>
+        <div id="map"></div>
+        <div id="stats">
+            <a href="#" id="stats-toggle" class="toggle">Map Statistics</a>
+            <div id="stats-content" class="collapsed">
 
-
-        
-        map.on('click', function(e) {
-            // console.log(JSON.stringify(e));
-            // console.log(getTileURL(e.latlng.lat, e.latlng.lng, map.getZoom()));
-            let xscalar = 5.02;
-            let yscalar = 5.83;
-            console.log("lnglat:     ", Math.floor(e.latlng.lng),Math.floor(e.latlng.lat));
-            console.log("scaled ll:  ", Math.floor(e.latlng.lng * xscalar),Math.floor(e.latlng.lat * yscalar));
-            console.log("layer point:", Math.floor(e.layerPoint.x),Math.floor(e.layerPoint.y));
-        });
-
-        // .toRad() fix
-        // from: http://stackoverflow.com/q/5260423/1418878
-        if (typeof(Number.prototype.toRad) === "undefined") {
-            Number.prototype.toRad = function() {
-                return this * Math.PI / 180;
-            }
-        }
-        function getTileURL(lat, lon, zoom) {
-            var xtile = parseInt(Math.floor( (lon + 180) / 360 * (1<<zoom) ));
-            var ytile = parseInt(Math.floor( (1 - Math.log(Math.tan(lat.toRad()) + 1 / Math.cos(lat.toRad())) / Math.PI) / 2 * (1<<zoom) ));
-            return "" + zoom + "/" + xtile + "/" + ytile;
-        }
-    </script>
-</body>
+            </div>
+        </div>
+        <script src="assets/js/sm_overview_map.js"></script>
+        <script>SMOverviewMap.init();</script>
+    </body>
 </html>

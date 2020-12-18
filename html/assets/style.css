@@ -3,7 +3,8 @@ html, body, #map {
     height:100%;
     margin:0;
     padding:0;
-    background-color: #B0B0B0
+    background-color: #B0B0B0;
+    font-family: 'Roboto', sans-serif;
 }
 .cell {
     font-size: 0.4em;
@@ -129,4 +130,36 @@ html, body, #map {
     width: 100%;
     height: 100%;
     /* opacity: 0.85; */
+}
+
+#stats {
+    position: fixed;
+    right: 10;
+    top: 30;
+    z-index: 1000;
+    background: #FCFCFC;
+    border-radius: 5px;
+    padding: 10px;
+    max-height: 60%;
+}
+.scroll-y {
+    overflow-y: scroll;
+}
+#stats-content {
+    font-size: 0.8em;
+    padding-top: 10px;
+}
+.collapsed {
+    display: none;
+}
+.stat-title {
+    padding-top: 10px;
+}
+.toggle {
+    float: right;
+    font-size: 0.9em;
+}
+#stats-content td {
+    font-size: 0.8em;
+    font-family: 'Roboto', sans-serif;
 }
