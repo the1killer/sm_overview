@@ -331,7 +331,7 @@ SMOverviewMap = (function() {
             zoomDelta: 0.5,
             wheelPxPerZoomLevel: 120
         })
-        map.attributionControl.addAttribution("<a target='_new' href='https://github.com/the1killer/sm_overview_ahk'>sm_overview_ahk By The1Killer</a>")
+        map.attributionControl.addAttribution("<a target='_new' href='https://github.com/the1killer/sm_overview'>sm_overview By The1Killer</a>")
 
         map.createPane('poiPane').style.zIndex = 300;
 
