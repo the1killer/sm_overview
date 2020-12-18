@@ -117,6 +117,7 @@ SMOverviewMap = (function() {
             //     }
             // }
         })
+        stats += `Map Seed: ${celldata[0].seed}<br/>`
         stats += `<div class="stat-title">Cell Types:</div><table>`
 
         var sortedKeys = Object.keys(typeCounts).sort(function(a,b) {
