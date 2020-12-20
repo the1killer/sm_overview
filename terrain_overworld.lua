@@ -69,7 +69,7 @@ function load()
 		createControlPoints()
 		updateLocationStorage()
 
-		print("Assembling Cell Json");
+		-- print("Assembling Cell Json");
 		local cells = {}
 		forEveryCell( function( cellX, cellY )
 			local cell = {}
@@ -91,10 +91,10 @@ function load()
 		if #cells > 0 then
 			cells[1]["bounds"] = g_cellData.bounds
 			cells[1]["seed"] = g_cellData.seed
-			print("Writing Cell Json");
+			-- print("Writing Cell Json");
 			sm.json.save( cells, "$SURVIVAL_DATA/".."cells.json" )
 			cells = nil;
-			print("Wrote Cell Json");
+			-- print("Wrote Cell Json");
 		end
 
 		return true
