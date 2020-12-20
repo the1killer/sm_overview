@@ -41,14 +41,8 @@ https://the1killer.github.io/scrapmechanictilemap/
 
 # Donation
 If you love this project and want to see more features give the developer a cup of coffee!
-<form action="https://www.paypal.com/donate" method="post" target="_top">
-<input type="hidden" name="cmd" value="_donations" />
-<input type="hidden" name="business" value="7JF52HNLJNHFE" />
-<input type="hidden" name="item_name" value="SM Overview Donations" />
-<input type="hidden" name="currency_code" value="USD" />
-<input type="image" src="https://www.paypalobjects.com/en_US/i/btn/btn_donate_SM.gif" border="0" name="submit" title="PayPal - The safer, easier way to pay online!" alt="Donate with PayPal button" />
-<img alt="" border="0" src="https://www.paypal.com/en_US/i/scr/pixel.gif" width="1" height="1" />
-</form>
+
+[![paypal](https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=7JF52HNLJNHFE&item_name=SM+Overview+Donations&currency_code=USD)
 
 
 <br/>
@@ -65,3 +59,4 @@ Scrap Mechanic is property of Axolot Games AB, I have no affiliation with them.
 [GitHub website]: https://pages.github.com/
 [Download Link]: https://github.com/the1killer/sm_overview/archive/main.zip
 [older screenshot method]: https://github.com/the1killer/sm_overview_ahk
+[Donate]: https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=7JF52HNLJNHFE&item_name=SM+Overview+Donations&currency_code=USD
