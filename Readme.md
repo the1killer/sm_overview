@@ -1,48 +1,54 @@
 <img src="https://i.imgur.com/orwkU5q.png" style="max-width:75%">
 
+# Introduction
+This quickly outputs the world data of your scrap mechanic save game to a json file for display via leafletJS from pre-screenshotted tiles. Not quite as beautiful as my [older screenshot method], but SOOOOOoooooo much quicker. This method is somewhat future proof as well. New tiles will still be displayed just blank, but updates should only require a new download of the missing tiles images.
+
 # Example
-https://the1killer.github.io/scrapmechanicmap/
+https://the1killer.github.io/scrapmechanictilemap/
 
 # INSTRUCTIONS
 
 !!!! BACKUP YOUR SAVE, not responsible for any issues !!!!
 
 1. **Really backup your save!**
-1. Install [AutoHotKey]
-1. Enable dev mode in SurvivalGame.lua, change `if g_survivalDev then`  to  `if true then` around line 84 after function **SurvivalGame.client_onCreate**
-1. Add /tp command to SurvivalGame.lua (see [SurvivalGame.lua](./SurvivalGame.lua)):
-    - add /tp to list of chat commands ~line 130
-    - add /tp handler ~line 529, before block of commands starting with **elseif params[1] == "/clearpathnodes**
-1. Reload save if already in game.
-1. Set FOV to 90, see makemap.ahk for other quality settings (alternates for FOV 70 and 90)
-1. Use Borderless Window Mode, disable Depth of Field, recommended turn everything down to low besides view distance
-1. If you resolution is NOT 1080p look at lines 26-34 of the AHK file and change to suit your resolution or choose 1440p by commenting out the 1080p section
-1. Make sure Geforce Experience hotkey is **NOT alt+z**, this is so we can hide in game UI
-1. Make sure you have nothing in your toolbar 0 slot or 5 slot.... 
-    - Sometimes the tp command hits 5 even though command is sent fine
-1. Make sure **/god** is on for godmode incase of falling and stops hunger/thirst
-1. Make sure you use **/day** to set 12:00 time and no time progression for best looking terrain. If you want night you could do /timeofday 1 and /timeprogress off
-1. Double click makemap.ahk script to load the script
-1. Press 5 or 0 or any other empty slot on your toolbar to remove tool from view
-1. Hit Shit+F1 to start the script, Dont touch your mouse and keyboard until its done
-1. Will show a popup "Map Done!" when its finished
-1. Open html/index.html to view your map
+1. Download this repoistory, green "Code" button on the top right, or [Download Link]
+1. Open terrain_overworld.lua from the downloaded files.
+1. Copy lines 73-98, `local cells` *...to...* `cells = nil   end`
+1. Open terrain_overworld.lua in your game files, e.x. C:\Program Files (x86)\Steam\steamapps\common\Scrap Mechanic\Survival\Scripts\game\terrain\terrain_overworld.lua
+1. Paste the lines into the game's terrain_overworld.lua, approx **line 71**, after `updateLocationStorage()`
+1. Load your save game.
+1. Copy **cells.json** from your game files C:\Program Files (x86)\Steam\steamapps\common\Scrap Mechanic\Survival\ to the **html\assets\json directory** in the downloads.
+1. <u>**If hosting on a webserver**</u>
+    1. Copy all the files under **html/** to your webserver and open index.html and good to go.
+1. <u>**If viewing locally**</u>
+    1. Open **cells.json**, select all text (ctrl-a), copy all text
+    1. Open **html/index.html**, on line 26 `SMOverviewMap.init();` add two back ticks( ` ) inside the parentheses
+    1. Paste the text from cell.json inbetween the backticks. becomes `SMOverviewMap.init(`\``[[{......`\``);`
+    1. Open **html/index.html** to view your map
+1. If you wish, remove or comment (--) the added lines in terrain_overworld.lua to improve game loading times
 
 
 ## Some things to note
-- Shift + F2 to reload the script if you make changes, or to stop it while generating
-- Terrain height especially along edges of images will cause lines to not match up
-- I reccomended you restart your game between map generations, seems to be a memory leak and FPS slow down.
+- Terrain height not really shown.
 - Game updates will remove the lua changes, requiring you to re-add them
-- Sometimes the teleport will get stuck in a loop if your body goes into ragdoll
-- If your machine takes a while to render the tiles after teleport change the delay on line ~101  `Sleep, 4000`
 - How to setup your own free [GitHub website]
+- I think there could be some missing road/cliff tiles as there are many possibilties on how they mesh with eachother. Create an issue with your map seed and I can try to capture them.
 
 
 # Changelog
 - v1.0.0
     - Initial Release
-    - Support for quality 1,2 on 1080p and 1440p
+
+# Donation
+If you love this project and want to see more features give the developer a cup of coffee!
+<form action="https://www.paypal.com/donate" method="post" target="_top">
+<input type="hidden" name="cmd" value="_donations" />
+<input type="hidden" name="business" value="7JF52HNLJNHFE" />
+<input type="hidden" name="item_name" value="SM Overview Donations" />
+<input type="hidden" name="currency_code" value="USD" />
+<input type="image" src="https://www.paypalobjects.com/en_US/i/btn/btn_donate_SM.gif" border="0" name="submit" title="PayPal - The safer, easier way to pay online!" alt="Donate with PayPal button" />
+<img alt="" border="0" src="https://www.paypal.com/en_US/i/scr/pixel.gif" width="1" height="1" />
+</form>
 
 
 <br/>
@@ -57,3 +63,5 @@ Scrap Mechanic is property of Axolot Games AB, I have no affiliation with them.
 [//]: # (Links)
 [AutoHotKey]: https://www.autohotkey.com/
 [GitHub website]: https://pages.github.com/
+[Download Link]: https://github.com/the1killer/sm_overview/archive/main.zip
+[older screenshot method]: https://github.com/the1killer/sm_overview_ahk
