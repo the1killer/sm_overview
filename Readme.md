@@ -22,8 +22,9 @@ https://the1killer.github.io/scrapmechanictilemap/
     1. Copy all the files under **html/** to your webserver and open index.html and good to go.
 1. <u>**If viewing locally**</u>
     1. Open **cells.json**, select all text (ctrl-a), copy all text
+    1. Paste text into https://codebeautify.org/jsonminifier and click "minify/compress" then copy the resulting text on the right
     1. Open **html/index.html**, on line 26 `SMOverviewMap.init();` add two back ticks( ` ) inside the parentheses
-    1. Paste the text from cell.json inbetween the backticks. becomes `SMOverviewMap.init(`\``[[{......`\``);`
+    1. Paste the text from Part 2 inbetween the backticks. becomes `SMOverviewMap.init(`\``[[{......`\``);`
     1. Open **html/index.html** to view your map
 1. If you wish, remove or comment (--) the added lines in terrain_overworld.lua to improve game loading times
 
