@@ -46,6 +46,15 @@ If you love this project and want to see more features give the developer a cup 
 [![paypal](https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=7JF52HNLJNHFE&item_name=SM+Overview+Donations&currency_code=USD)
 
 
+# Tutorial Video
+Thanks to LionHeartBlue Gaming to making a tutorial video. Most people will need **Option 2** listed above and in the video. 
+<br/>
+Remember to enclose the JSON with back ticks **\`**.
+<br/>
+<br/>
+[![Tutorial Video](http://i3.ytimg.com/vi/qkMIsQqdUmU/hqdefault.jpg)](https://youtu.be/qkMIsQqdUmU)
+
+
 <br/>
 <br/>
 <br/>
