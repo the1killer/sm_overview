@@ -1,7 +1,6 @@
-dofile "overworld/generate_cells.lua"
-dofile "$GAME_DATA/Scripts/game/terrain/cell_rotation_utility.lua"
-dofile "random_generation.lua"
 dofile "$SURVIVAL_DATA/Scripts/game/survival_constants.lua"
+dofile "$SURVIVAL_DATA/Scripts/terrain/random_generation.lua"
+dofile "$SURVIVAL_DATA/Scripts/terrain/overworld/generate_cells.lua"
 
 -- Versions
 -- 1: Adds 'mechanicStation'
@@ -13,16 +12,36 @@ local SCALE = 8
 local ADD_LOD = 1
 local DEBUG_COLORS = false
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 ----------------------------------------------------------------------------------------------------
 -- Initialization
 ----------------------------------------------------------------------------------------------------
-g_world = 0
-g_generatorIndex = 0
 
-function init( world, generatorIndex )
+function Init( world, generatorIndex )
 	g_world = world
 	g_generatorIndex = generatorIndex
-	
+
 	initRoadAndCliffTiles()
 	initMeadowTiles()
 	initForestTiles()
@@ -30,52 +49,92 @@ function init( world, generatorIndex )
 	initBurntForestTiles()
 	initAutumnForestTiles()
 	initLakeTiles()
-	initMountainTiles()
 	initDesertTiles()
 	initPoiTiles()
+	--TODO: Ravine. A desert cliff type of thing.
 end
 
-function create( xMin, xMax, yMin, yMax, seed, data, padding )
+
+function Create( xMin, xMax, yMin, yMax, seed, data )
+
+	-- v0.5.0: graphicsCellPadding is no longer included in min/max
+	local graphicsCellPadding = 8
+	xMin = xMin - graphicsCellPadding
+	xMax = xMax + graphicsCellPadding
+	yMin = yMin - graphicsCellPadding
+	yMax = yMax + graphicsCellPadding
+
 	--seed = 1337 --HACK: Constant seed for testing
 	--math.randomseed( os.time() )
 	--seed = math.random( 1073741823 )
 	--seed = 852772513
-	
+
 	print( "Creating overworld terrain" )
 	print( "Bounds X: ["..xMin..", "..xMax.."], Y: ["..yMin..", "..yMax.."]" )
 	print( "Seed: "..seed )
 
 	print( "Total cells: " .. ( xMax - xMin + 1 ) * ( yMax - yMin + 1 ) )
 
-	generateOverworldCelldata( xMin, xMax, yMin, yMax, seed, data, padding )
-	
-	sm.terrainData.save( g_cellData )
-	
-	createControlPoints()
-	updateLocationStorage()
+	generateOverworldCelldata( xMin, xMax, yMin, yMax, seed, data, graphicsCellPadding )
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	sm.terrainData.save( g_cellData )
+
+	CreateControlPoints()
+	UpdateLocationStorage()
+	CreateCellTileStorageKeys()
 end
 
-----------------------------------------------------------------------------------------------------
 
-function load()
+function Load()
 	print( "Loading overworld terrain" )
+
+
+
+
+
+
+
+
 	if sm.terrainData.exists() then
 		g_cellData = sm.terrainData.load()
-		--print( "Bounds X: [" .. g_cellData.bounds.xMin .. ", " .. g_cellData.bounds.xMax .. "], Y: [" .. g_cellData.bounds.yMin .. ", " .. g_cellData.bounds.yMax .. "]" )
-		--print( "Seed: "..g_cellData.seed )
+		if UpgradeCellData( g_cellData ) then
+			sm.terrainData.save( g_cellData )
+		end
 
-		
-		createControlPoints()
-		updateLocationStorage()
+		CreateControlPoints()
+		UpdateLocationStorage()
+		CreateCellTileStorageKeys()
 
-		-- print("Assembling Cell Json");
 		local cells = {}
 		forEveryCell( function( cellX, cellY )
 			local cell = {}
 			cell["x"] = cellX
 			cell["y"] = cellY;
-			cell["tileid"] = getCellTileId( cellX, cellY )
+			cell["tileid"] = GetLegacyID(GetCellTileUid( cellX, cellY )) -- modified by Arkanorian to work for update 0.6.0
 			cell["flags"] = g_cellData.flags[cellY][cellX]
 			cell["rotation"] = g_cellData.rotation[cellY][cellX]
 			-- cell["elevation"] = g_cellData.elevation[cellY][cellX]
@@ -84,7 +143,7 @@ function load()
 			-- cell["offy"] = g_cellData.tileOffsetY[cellY][cellX]
 			-- cell["celldebug"] = g_cellData.cellDebug[cellY][cellX]
 			-- cell["cornerdebug"] = g_cellData.cornerDebug[cellY][cellX]
-			--cell["variation"] = sm.noise.intNoise2d( cellX, cellY, g_cellData.seed + 2854 )
+			-- cell["variation"] = sm.noise.intNoise2d( cellX, cellY, g_cellData.seed + 2854 )
 
 			cells[#cells+1] = cell
 		end )
@@ -103,46 +162,9 @@ function load()
 	return false
 end
 
+----------------------------------------------------------------------------------------------------
 
-function updateLocationStorage()
-	if g_generatorIndex == 0 and sm.isHost then
-		
-		local storage = sm.terrainGeneration.loadGameStorage( STORAGE_CHANNEL_LOCATIONS ) or { version = 0 }
-		if storage.version ~= LOCATION_STORAGE_VERSION then
-
-			storage = { version = LOCATION_STORAGE_VERSION }
-
-			function FindFirstPoiCell( type )
-				for cellY = g_cellData.bounds.yMin, g_cellData.bounds.yMax do
-					for cellX = g_cellData.bounds.xMin, g_cellData.bounds.xMax do
-						local tileId = getCellTileId( cellX, cellY )
-						if type == getPoiType( tileId ) then
-							return cellX, cellY
-						end
-					end
-				end
-			end
-
-			function AddLocation( name, poi, size, bx, by, bz )
-				local cellX, cellY = FindFirstPoiCell( poi )
-				assert(cellX)
-				assert(cellY)
-				local rx, ry = rotateLocal( cellX, cellY, bx, by, size * CELL_SIZE )
-				local x = cellX * CELL_SIZE + rx
-				local y = cellY * CELL_SIZE + ry
-				local z = bz + getElevationHeightAt( x, y ) + getCliffHeightAt( x, y )
-				storage[name] = { pos = sm.vec3.new( x, y, z ), world = g_world }
-			end
-
-			AddLocation("mechanicStation", POI_MECHANICSTATION_MEDIUM, 2, 44.0, 85.0, 18.0)
-			storage["crashedShip"] = { pos = sm.vec3.new( -2372.0, -2623.0, 18.0 ), world = g_world }
-		
-			sm.terrainGeneration.saveGameStorage( STORAGE_CHANNEL_LOCATIONS, storage )
-		end
-	end
-end
-
-function createControlPoints()
+function CreateControlPoints()
 	g_cpWestEdge = {}
 	g_cpSouthEdge = {}
 	g_cpMid = {}
@@ -156,6 +178,59 @@ function createControlPoints()
 			local cpEastEdge = ( getCornerElevationLevel( x + 1, y ) + getCornerElevationLevel( x + 1, y + 1 ) ) / 2
 			g_cpMid[y][x] = ( g_cpWestEdge[y][x] + cpEastEdge ) / 2
 		end
+	end
+end
+
+function UpdateLocationStorage()
+	if g_generatorIndex == 0 and sm.isHost then
+
+		local storage = sm.terrainGeneration.loadGameStorage( STORAGE_CHANNEL_LOCATIONS ) or { version = 0 }
+		if storage.version ~= LOCATION_STORAGE_VERSION then
+
+			storage = { version = LOCATION_STORAGE_VERSION }
+
+			function FindFirstPoiCell( poiType )
+				for cellY = g_cellData.bounds.yMin, g_cellData.bounds.yMax do
+					for cellX = g_cellData.bounds.xMin, g_cellData.bounds.xMax do
+						local uid = GetCellTileUid( cellX, cellY )
+						assert( type( uid ) == "Uuid", "Cell id not a UUID ("..cellX..", "..cellY..")" )
+						if poiType == GetPoiType( uid ) then
+							return cellX, cellY
+						end
+					end
+				end
+			end
+
+			function AddLocation( name, poiType, size, bx, by, bz )
+				local cellX, cellY = FindFirstPoiCell( poiType )
+				assert(cellX)
+				assert(cellY)
+				local rx, ry = RotateLocal( cellX, cellY, bx, by, size * CELL_SIZE )
+				local x = cellX * CELL_SIZE + rx
+				local y = cellY * CELL_SIZE + ry
+				local z = bz + getElevationHeightAt( x, y ) + getCliffHeightAt( x, y )
+				storage[name] = { pos = sm.vec3.new( x, y, z ), world = g_world }
+			end
+
+			AddLocation("mechanicStation", POI_MECHANICSTATION_MEDIUM, 2, 44.0, 85.0, 18.0)
+			storage["crashedShip"] = { pos = sm.vec3.new( -2372.0, -2623.0, 18.0 ), world = g_world }
+
+			sm.terrainGeneration.saveGameStorage( STORAGE_CHANNEL_LOCATIONS, storage )
+		end
+	end
+end
+
+function CreateCellTileStorageKeys()
+	if g_generatorIndex == 0 and sm.isHost then
+		local worldId = g_world.id
+		local cellTileStorageKeys = { indoor = false, cellKeys = {} }
+		for cellY = g_cellData.bounds.yMin, g_cellData.bounds.yMax do
+			cellTileStorageKeys.cellKeys[cellY] = {}
+			for cellX = g_cellData.bounds.xMin, g_cellData.bounds.xMax do
+				cellTileStorageKeys.cellKeys[cellY][cellX] = CalculateTileStorageKey( worldId, cellX, cellY )
+			end
+		end
+		sm.terrainGeneration.setGameStorageNoSave( "tsk_"..worldId, cellTileStorageKeys )
 	end
 end
 
@@ -240,38 +315,38 @@ function getMidElevationX( x0, y0, xFract )
 	local t = xFract
 	local x1 = x0 + 1
 	local c0, c1, c2, c3
-	
+
 	c0 = getMidElevation( x0, y0 )
-	
+
 	if flatTowardsEast( x0, y0 ) == 1 then
 		c1 = getMidElevation( x0, y0 )
 	else
 		c1 = getEastElevation( x0, y0 )
 	end
-	
+
 	if flatTowardsWest( x1, y0 ) == 1 then
 		c2 = getMidElevation( x1, y0 )
 	else
 		c2 = getWestElevation( x1, y0 )
 	end
-	
+
 	c3 = getMidElevation( x1, y0 )
-	
+
 	return sm.util.bezier3( c0, c1, c2, c3, t )
 end
 
 function getSouthElevationX( x0, y0, xFract )
 	local t = xFract
 	local x1 = x0 + 1
-	
+
 	local flatnessEast = flatTowardsEast( x0, y0 - 1 ) * 0.5 + flatTowardsEast( x0, y0 ) * 0.5
 	local flatnessWest = flatTowardsWest( x1, y0 - 1 ) * 0.5 + flatTowardsWest( x1, y0 ) * 0.5
-	
+
 	local c0 = getSouthElevation( x0, y0 )
 	local c1 = sm.util.lerp( getSouthEastElevation( x0, y0 ), getSouthElevation( x0, y0 ), flatnessEast )
 	local c2 = sm.util.lerp( getSouthWestElevation( x1, y0 ), getSouthElevation( x1, y0 ), flatnessWest )
 	local c3 = getSouthElevation( x1, y0 )
-	
+
 	return sm.util.bezier3( c0, c1, c2, c3, t )
 end
 
@@ -281,13 +356,18 @@ end
 
 ----------------------------------------------------------------------------------------------------
 
+local function getFraction( x, y )
+	local cellX, cellY = getCell( x, y )
+	return x / CELL_SIZE - cellX, y / CELL_SIZE - cellY
+end
+
 local function getElev( x, y )
 	local cellX, cellY = getCell( x, y )
 	local xFract, yFract = getFraction( x, y ) -- Fraction in cell [0,1)
 
 	local x0, y0
 	local xFract2, yFract2 --Mid to mid
-	
+
 	if xFract < 0.5 then
 		x0 = cellX - 1
 		xFract2 = xFract + 0.5
@@ -295,7 +375,7 @@ local function getElev( x, y )
 		x0 = cellX
 		xFract2 = xFract - 0.5
 	end
-	
+
 	if yFract < 0.5 then
 		y0 = cellY - 1
 		yFract2 = yFract + 0.5
@@ -303,15 +383,15 @@ local function getElev( x, y )
 		y0 = cellY
 		yFract2 = yFract - 0.5
 	end
-	
+
 	local flatnessNorth = sm.util.lerp( flatTowardsNorth( x0, y0 ), flatTowardsNorth( x0 + 1, y0 ), xFract2 )
 	local flatnessSouth = sm.util.lerp( flatTowardsSouth( x0, y0 + 1 ), flatTowardsSouth( x0 + 1, y0 + 1 ), xFract2 )
-	
+
 	local c0 = getMidElevationX( x0, y0, xFract2 )
 	local c1 = sm.util.lerp( getNorthElevationX( x0, y0, xFract2 ), getMidElevationX( x0, y0, xFract2 ), flatnessNorth )
 	local c2 = sm.util.lerp( getSouthElevationX( x0, y0 + 1, xFract2 ), getMidElevationX( x0, y0 + 1, xFract2 ), flatnessSouth )
 	local c3 = getMidElevationX( x0, y0 + 1, xFract2 )
-	
+
 	return sm.util.bezier3( c0, c1, c2, c3, yFract2 )
 end
 
@@ -319,23 +399,22 @@ local FlattenCache = {}
 
 function getElevationHeightAt( x, y )
 	local cellX, cellY = getCell( x, y )
-	
+
 	local blend
 	local cacheKey = bit.bor( bit.lshift( cellY + 128, 8 ), cellX + 128 )
 	local flattenList = FlattenCache[cacheKey]
-	
+
 	if flattenList == nil then
 		flattenList = {}
 
 		for i = -1, 1 do
 			for j = -1, 1 do
-				local id, tileCellOffsetX, tileCellOffsetY = getCellTileIdAndOffset( cellX + j, cellY + i )
-
-				if id ~= 0 then
-					local nodes = sm.terrainTile.getNodesForCell( id, tileCellOffsetX, tileCellOffsetY )
+				local uid, tileCellOffsetX, tileCellOffsetY = GetCellTileUidAndOffset( cellX + j, cellY + i )
+				if not uid:isNil() then
+					local nodes = sm.terrainTile.getNodesForCell( uid, tileCellOffsetX, tileCellOffsetY )
 					for _, node in ipairs( nodes ) do
-						if valueExists( node.tags, "FLATTEN" ) then
-							local rx, ry = rotateLocal( cellX + j, cellY + i, round( node.pos.x ), round( node.pos.y ) )
+						if ValueExists( node.tags, "FLATTEN" ) then
+							local rx, ry = RotateLocal( cellX + j, cellY + i, round( node.pos.x ), round( node.pos.y ) )
 							flattenList[#flattenList + 1] = {
 								x = rx + ( cellX + j ) * CELL_SIZE,
 								y = ry + ( cellY + i ) * CELL_SIZE,
@@ -358,11 +437,6 @@ function getElevationHeightAt( x, y )
 			end
 		end
 
-		-- if #flattenList > 0 then
-		-- 	local rotationStep = getCellRotationStep( cellX, cellY )
-		-- 	print( "#flat on "..cellX..","..cellY..":"..#flattenList, "rot:", rotationStep )
-		-- end
-		
 		FlattenCache[cacheKey] = flattenList
 	end
 
@@ -410,11 +484,11 @@ end
 
 function getDetailHeightAt( x, y, lod )
 	local cellX, cellY = getCell( x, y )
-	local id, tileCellOffsetX, tileCellOffsetY = getCellTileIdAndOffset( cellX, cellY )
+	local uid, tileCellOffsetX, tileCellOffsetY = GetCellTileUidAndOffset( cellX, cellY )
 
-	local rx, ry = inverseRotateLocal( cellX, cellY, x - cellX * CELL_SIZE, y - cellY * CELL_SIZE )
+	local rx, ry = InverseRotateLocal( cellX, cellY, x - cellX * CELL_SIZE, y - cellY * CELL_SIZE )
 
-	return sm.terrainTile.getHeightAt( id, tileCellOffsetX, tileCellOffsetY, lod, rx, ry )
+	return sm.terrainTile.getHeightAt( uid, tileCellOffsetX, tileCellOffsetY, lod, rx, ry )
 end
 
 ----------------------------------------------------------------------------------------------------
@@ -432,13 +506,24 @@ end
 -- Generator API Getters
 ----------------------------------------------------------------------------------------------------
 
-function getHeightAt( x, y, lod )
+function GetCellTileUidAndOffset( cellX, cellY )
+	if InsideCellBounds( cellX, cellY ) then
+		return 	g_cellData.uid[cellY][cellX],
+				g_cellData.xOffset[cellY][cellX],
+				g_cellData.yOffset[cellY][cellX]
+	end
+	return sm.uuid.getNil(), 0, 0
+end
+
+----------------------------------------------------------------------------------------------------
+
+function GetHeightAt( x, y, lod )
 	if SCALE_HACK == true then
 		x = x * SCALE
 		y = y * SCALE
 		lod = lod + ADD_LOD
 	end
-	
+
 	local height = -16
 	local cellX, cellY = getCell( x, y )
 	if insideCellBounds( cellX, cellY ) == true then
@@ -482,47 +567,33 @@ end
 
 local function cellDebugColor( cellX, cellY, color )
 	local c
-	-- if g_cellData.cellDebug[cellY][cellX] == DEBUG_R then
-	-- 	c = { 1.0, 0.0, 0.0 }
-	-- elseif g_cellData.cellDebug[cellY][cellX] == DEBUG_G then
-	-- 	c = { 0.0, 1.0, 0.0 }
-	-- elseif g_cellData.cellDebug[cellY][cellX] == DEBUG_B then
-	-- 	c = { 0.0, 0.0, 1.0 }
-	-- elseif g_cellData.cellDebug[cellY][cellX] == DEBUG_C then
-	-- 	c = { 0.0, 1.0, 1.0 }
-	-- elseif g_cellData.cellDebug[cellY][cellX] == DEBUG_M then
-	-- 	c = { 1.0, 0.0, 1.0 }
-	-- elseif g_cellData.cellDebug[cellY][cellX] == DEBUG_Y then
-	-- 	c = { 1.0, 1.0, 0.0 }
-	-- elseif g_cellData.cellDebug[cellY][cellX] == DEBUG_BLACK then
-	-- 	c = { 0.1, 0.1, 0.1 }
-	-- elseif g_cellData.cellDebug[cellY][cellX] == DEBUG_ORANGE then
-	-- 	c = { 1.0, 0.5, 0.0 }
-	-- elseif g_cellData.cellDebug[cellY][cellX] == DEBUG_PINK then
-	-- 	c = { 1.0, 0.0, 0.5 }
-	-- elseif g_cellData.cellDebug[cellY][cellX] == DEBUG_LIME then
-	-- 	c = { 0.5, 1.0, 0.0 }
-	-- elseif g_cellData.cellDebug[cellY][cellX] == DEBUG_SPING then
-	-- 	c = { 0.0, 1.0, 0.5 }
-	-- elseif g_cellData.cellDebug[cellY][cellX] == DEBUG_PURPLE then
-	-- 	c = { 0.5, 0.0, 1.0 }
-	-- elseif g_cellData.cellDebug[cellY][cellX] == DEBUG_LAKE then
-	-- 	c = { 0.0, 0.5, 1.0 }
-	-- end
-	local colors = {};
-	colors[0]={}
-	colors[1]={}
-	colors[2]={}
-	colors[0][0] = { 1.0, 0.0, 0.0 }
-	colors[0][1] = { 1.0, 0.0, 0.5 }
-	colors[0][2] = { 0.5, 1.0, 0.0 }
-	colors[1][0] = { 0.5, 0.0, 1.0 }
-	colors[1][1] = { 0.0, 1.0, 0.5 }
-	colors[1][2] = { 0.0, 1.0, 1.0 }
-	colors[2][0] = { 0.0, 0.0, 1.0 }
-	colors[2][1] = { 0.0, 1.0, 0.0 }
-	colors[2][2] = { 1.0, 0.5, 0.0 }
-	c = colors[cellX % 3][cellY % 3];
+	if g_cellData.cellDebug[cellY][cellX] == DEBUG_R then
+		c = { 1.0, 0.0, 0.0 }
+	elseif g_cellData.cellDebug[cellY][cellX] == DEBUG_G then
+		c = { 0.0, 1.0, 0.0 }
+	elseif g_cellData.cellDebug[cellY][cellX] == DEBUG_B then
+		c = { 0.0, 0.0, 1.0 }
+	elseif g_cellData.cellDebug[cellY][cellX] == DEBUG_C then
+		c = { 0.0, 1.0, 1.0 }
+	elseif g_cellData.cellDebug[cellY][cellX] == DEBUG_M then
+		c = { 1.0, 0.0, 1.0 }
+	elseif g_cellData.cellDebug[cellY][cellX] == DEBUG_Y then
+		c = { 1.0, 1.0, 0.0 }
+	elseif g_cellData.cellDebug[cellY][cellX] == DEBUG_BLACK then
+		c = { 0.1, 0.1, 0.1 }
+	elseif g_cellData.cellDebug[cellY][cellX] == DEBUG_ORANGE then
+		c = { 1.0, 0.5, 0.0 }
+	elseif g_cellData.cellDebug[cellY][cellX] == DEBUG_PINK then
+		c = { 1.0, 0.0, 0.5 }
+	elseif g_cellData.cellDebug[cellY][cellX] == DEBUG_LIME then
+		c = { 0.5, 1.0, 0.0 }
+	elseif g_cellData.cellDebug[cellY][cellX] == DEBUG_SPRING then
+		c = { 0.0, 1.0, 0.5 }
+	elseif g_cellData.cellDebug[cellY][cellX] == DEBUG_PURPLE then
+		c = { 0.5, 0.0, 1.0 }
+	elseif g_cellData.cellDebug[cellY][cellX] == DEBUG_LAKE then
+		c = { 0.0, 0.5, 1.0 }
+	end
 	if c then
 		color[1] = c[1]
 		color[2] = c[2]
@@ -530,33 +601,33 @@ local function cellDebugColor( cellX, cellY, color )
 	end
 end
 
-function getColorAt( x, y, lod )
+function GetColorAt( x, y, lod )
 	if SCALE_HACK == true then
 		x = x * SCALE
 		y = y * SCALE
 		lod = lod + ADD_LOD
 	end
-	
+
 	local noise = sm.noise.octaveNoise2d( x / 8, y / 8, 5, 45 )
 	local brightness = noise * 0.25 + 0.75
-	
+
 	local cornerX, cornerY = getClosestCorner( x, y )
 	local cellX, cellY = getCell( x, y )
-	
+
 	if insideCellBounds( cellX, cellY ) == true then
-		local id, tileCellOffsetX, tileCellOffsetY = getCellTileIdAndOffset( cellX, cellY )
-	
-		local rx, ry = inverseRotateLocal( cellX, cellY, x - cellX * CELL_SIZE, y - cellY * CELL_SIZE )
-	
-		local r, g, b = sm.terrainTile.getColorAt( id, tileCellOffsetX, tileCellOffsetY, lod, rx, ry )
-	
+		local uid, tileCellOffsetX, tileCellOffsetY = GetCellTileUidAndOffset( cellX, cellY )
+
+		local rx, ry = InverseRotateLocal( cellX, cellY, x - cellX * CELL_SIZE, y - cellY * CELL_SIZE )
+
+		local r, g, b = sm.terrainTile.getColorAt( uid, tileCellOffsetX, tileCellOffsetY, lod, rx, ry )
+
 		local color = { r, g, b }
 
 		if DEBUG_COLORS then
 			--cornerDebugColor( cornerX, cornerY, color )
 			cellDebugColor( cellX, cellY, color )
 		end
-		
+
 		--brightness = 0.75 -- No noise
 
 		--Checkerboard pattern
@@ -590,16 +661,16 @@ end
 
 ----------------------------------------------------------------------------------------------------
 
-function getMaterialAt( x, y, lod )
+function GetMaterialAt( x, y, lod )
 	if SCALE_HACK == true then
 		x = x * SCALE
 		y = y * SCALE
 		lod = lod + ADD_LOD
 	end
-	
+
 	local cellX, cellY = getCell( x, y )
 	if insideCellBounds( cellX, cellY ) == true then
-	
+
 --		if cellX == 0 then
 --			return 1, 0, 0, 0, 0, 0, 0, 0
 --		elseif cellX == 1 then
@@ -617,30 +688,30 @@ function getMaterialAt( x, y, lod )
 --		elseif cellX == 7 then
 --			return 0, 0, 0, 0, 0, 0, 0, 1
 --		end
-		local id, tileCellOffsetX, tileCellOffsetY = getCellTileIdAndOffset( cellX, cellY )
-		
-		local rx, ry = inverseRotateLocal( cellX, cellY, x - cellX * CELL_SIZE, y - cellY * CELL_SIZE )
-		
-		return sm.terrainTile.getMaterialAt( id, tileCellOffsetX, tileCellOffsetY, lod, rx, ry )
+		local uid, tileCellOffsetX, tileCellOffsetY = GetCellTileUidAndOffset( cellX, cellY )
+
+		local rx, ry = InverseRotateLocal( cellX, cellY, x - cellX * CELL_SIZE, y - cellY * CELL_SIZE )
+
+		return sm.terrainTile.getMaterialAt( uid, tileCellOffsetX, tileCellOffsetY, lod, rx, ry )
 	end
 	return 1, 0, 0, 0, 0, 0, 0, 0
 end
 
 ----------------------------------------------------------------------------------------------------
 
-function getClutterIdxAt( x, y )
+function GetClutterIdxAt( x, y )
 	if SCALE_HACK == true then
 		x = x * SCALE
 		y = y * SCALE
 	end
-	
+
 	local cellX, cellY = getCell( x * 0.5, y * 0.5 )
 	if insideCellBounds( cellX, cellY ) == true then
-		local id, tileCellOffsetX, tileCellOffsetY = getCellTileIdAndOffset( cellX, cellY )
-		
-		local rx, ry = inverseRotateLocal( cellX, cellY, x - cellX * CELL_SIZE * 2, y - cellY * CELL_SIZE * 2, CELL_SIZE * 2 - 1 )
+		local uid, tileCellOffsetX, tileCellOffsetY = GetCellTileUidAndOffset( cellX, cellY )
 
-		return sm.terrainTile.getClutterIdxAt( id, tileCellOffsetX, tileCellOffsetY, rx, ry )
+		local rx, ry = InverseRotateLocal( cellX, cellY, x - cellX * CELL_SIZE * 2, y - cellY * CELL_SIZE * 2, CELL_SIZE * 2 - 1 )
+
+		return sm.terrainTile.getClutterIdxAt( uid, tileCellOffsetX, tileCellOffsetY, rx, ry )
 	else
 		return -1
 	end
@@ -648,13 +719,13 @@ end
 
 ----------------------------------------------------------------------------------------------------
 
-function getEffectMaterialAt( x, y )
+function GetEffectMaterialAt( x, y )
 	if SCALE_HACK == true then
 		return "Grass"
 	end
 
-	local mat0, mat1, mat2, mat3, mat4, mat5, mat6, mat7 = getMaterialAt(x, y, 0)
-	
+	local mat0, mat1, mat2, mat3, mat4, mat5, mat6, mat7 = GetMaterialAt(x, y, 0)
+
 	local materialWeights = {}
 	materialWeights["Grass"] = math.max(mat4, mat7)
 	materialWeights["Rock"] = math.max(mat0, mat2, mat5)
@@ -662,13 +733,13 @@ function getEffectMaterialAt( x, y )
 	materialWeights["Sand"] = math.max(mat1)
 	local weightThreshold = 0.25
 	local selectedKey = "Grass"
-	
+
 	for key, weight in pairs(materialWeights) do
 		if weight > materialWeights[selectedKey] and weight > weightThreshold then
 			selectedKey = key
 		end
 	end
-	
+
 	return selectedKey
 end
 
@@ -680,46 +751,84 @@ invalidAssets = {
 
 local water_asset_uuid = sm.uuid.new( "990cce84-a683-4ea6-83cc-d0aee5e71e15" )
 
-function getAssetsForCell( cellX, cellY, size )
+function GetAssetsForCell( cellX, cellY, size )
 	if SCALE_HACK == true then
 		return {}
 	end
-	
-	local id, tileCellOffsetX, tileCellOffsetY = getCellTileIdAndOffset( cellX, cellY )
 
-	if id ~= 0 then
+	local uid, tileCellOffsetX, tileCellOffsetY = GetCellTileUidAndOffset( cellX, cellY )
+	
+	if not uid:isNil() then
 		local lake = isLake( cellX, cellY )
+		
+		local key = CalculateTileStorageKey( g_world.id, cellX, cellY ) or {}
+		local tileStorage = sm.terrainGeneration.loadGameStorage( key ) or {}
 
-		local assets = sm.terrainTile.getAssetsForCell( id, tileCellOffsetX, tileCellOffsetY, size )
-		for _,asset in ipairs( assets ) do
-			-- Invalid asset hunt!
+		local anyRemoved = false
+ 		local assets = sm.terrainTile.getAssetsForCell( uid, tileCellOffsetX, tileCellOffsetY, size )
+		for i = 1, #assets do
+			local asset = assets[i]
 			if invalidAssets[tostring( asset.uuid )] then
-				sm.log.error( "Invalid asset {"..tostring( asset.uuid ).."} in tile: '"..getTilePath( id ).."'" )
+				sm.log.error( "Invalid asset {"..tostring( asset.uuid ).."} in tile: '"..GetTilePath( uid ).."'" )
 			end
-			
-			local rx, ry = rotateLocal( cellX, cellY, asset.pos.x, asset.pos.y )
-	
+
+			local rx, ry = RotateLocal( cellX, cellY, asset.pos.x, asset.pos.y )
+
 			local x = cellX * CELL_SIZE + rx
 			local y = cellY * CELL_SIZE + ry
-	
-			local height = asset.pos.z + getCliffHeightAt( x, y )
 
+			local height = asset.pos.z + getCliffHeightAt( x, y )
+			
 			-- Water rotation
 			if lake and asset.uuid == water_asset_uuid then
 				asset.rot = sm.quat.new( 0.7071067811865475, 0.0, 0.0, 0.7071067811865475 )
 			else
 				height = height + getElevationHeightAt( x, y )
-				asset.rot = getRotationStepQuat( cellX, cellY ) * asset.rot
+				asset.rot = GetRotationQuat( cellX, cellY ) * asset.rot
 			end
-			asset.pos = sm.vec3.new( rx, ry, height )
-
+			asset.pos = sm.vec3.new( rx, ry, height )		
 
 			local nor = getElevationNormalAt( x, y )
-			if nor.z < 0.999848 then --Slope angle > 1 deg
+			if nor.z < 0.999848 then --Slope angle > 1 deg 
 				asset.slopeNormal = nor
 			end
+
+			for _, tag in pairs( asset.tags ) do
+				--ts:keyname=value
+
+				local it = string.gmatch( tag, "([^:]+)" )
+				local ts = it()
+				
+				if ts == "ts" then
+					
+					local keyAndValue = it()
+					it = string.gmatch( keyAndValue, "([^=]+)" )
+					local key = it()
+					local value = it()
+
+					if key and value then
+						if tileStorage[key] then
+							if tileStorage[key] ~= value then
+								anyRemoved = true
+								assets[i] = nil
+							end
+						elseif value ~= "default" then
+							anyRemoved = true
+							assets[i] = nil
+						end
+					end
+				end
+			end
 		end
-	
+
+		if anyRemoved then
+
+			removeFromArray( assets,
+			function( value )
+				return value == nil
+			end )
+		end
+
 		return assets
 	end
 	return {}
@@ -727,24 +836,24 @@ end
 
 ----------------------------------------------------------------------------------------------------
 
-function getHarvestablesForCell( cellX, cellY, size )
+function GetHarvestablesForCell( cellX, cellY, size )
 	if SCALE_HACK == true then
 		return {}
 	end
 
-	local id, tileCellOffsetX, tileCellOffsetY = getCellTileIdAndOffset( cellX, cellY )
-	if id ~= 0 then
+	local uid, tileCellOffsetX, tileCellOffsetY = GetCellTileUidAndOffset( cellX, cellY )
+	if not uid:isNil() then
 		-- Load harvestables from cell
-		local harvestables = sm.terrainTile.getHarvestablesForCell( id, tileCellOffsetX, tileCellOffsetY, size )
+		local harvestables = sm.terrainTile.getHarvestablesForCell( uid, tileCellOffsetX, tileCellOffsetY, size )
 		for _, harvestable in ipairs( harvestables ) do
-			local rx, ry = rotateLocal( cellX, cellY, harvestable.pos.x, harvestable.pos.y )
+			local rx, ry = RotateLocal( cellX, cellY, harvestable.pos.x, harvestable.pos.y )
 	
 			local x = cellX * CELL_SIZE + rx
 			local y = cellY * CELL_SIZE + ry
 	
 			local height = harvestable.pos.z + getElevationHeightAt( x, y ) + getCliffHeightAt( x, y )
 			harvestable.pos = sm.vec3.new( rx, ry, height )
-			harvestable.rot = getRotationStepQuat( cellX, cellY ) * harvestable.rot
+			harvestable.rot = GetRotationQuat( cellX, cellY ) * harvestable.rot
 
 			local nor = getElevationNormalAt( x, y )
 			if nor.z < 0.999848 then --Slope angle > 1 deg
@@ -753,6 +862,55 @@ function getHarvestablesForCell( cellX, cellY, size )
 		end
 		
 		return harvestables
+	end
+	return {}
+end
+
+----------------------------------------------------------------------------------------------------
+
+function GetKinematicsForCell( cellX, cellY, size )
+	if SCALE_HACK == true then
+		return {}
+	end
+
+	local uid, tileCellOffsetX, tileCellOffsetY = GetCellTileUidAndOffset( cellX, cellY )
+	if not uid:isNil() then
+		-- Load kinematics from cell
+		local kinematics = sm.terrainTile.getKinematicsForCell( uid, tileCellOffsetX, tileCellOffsetY, size )
+
+		local tileStorageKey
+		if #kinematics > 0 then
+			tileStorageKey = CalculateTileStorageKey( g_world.id, cellX, cellY )
+		end
+
+		for _, kinematic in ipairs( kinematics ) do
+			local rx, ry = RotateLocal( cellX, cellY, kinematic.pos.x, kinematic.pos.y )
+	
+			local x = cellX * CELL_SIZE + rx
+			local y = cellY * CELL_SIZE + ry
+	
+			local height = kinematic.pos.z + getElevationHeightAt( x, y ) + getCliffHeightAt( x, y )
+			kinematic.pos = sm.vec3.new( rx, ry, height )
+			kinematic.rot = GetRotationQuat( cellX, cellY ) * kinematic.rot
+			
+			if kinematic.params == nil then
+				kinematic.params = {}
+			end
+			kinematic.params.tileStorageKey = tileStorageKey
+
+			--local string = tostring( kinematic.uuid ).."%"..(kinematic.params.name or "").."%"..(kinematic.params.event or "").."%"..g_world.id.."%"..cellX.."%"..cellY
+			--kinematic.params.stateUuid = sm.uuid.generateNamed( UUID5_NAMESPACE_KINEMATIC_STATE, string )
+
+			--local storage = sm.terrainGeneration.loadGameStorage( { STORAGE_CHANNEL_KINEMATIC_STATE, kinematic.params.stateUuid } )
+			--if storage then
+				--TODO: Evaluate animated position from stored data
+				--TODO: Use cellX, cellY in HarvestableManager cell map
+			--end
+
+			print( "Added kinematic:", kinematic.params )
+		end
+		
+		return kinematics
 	end
 	return {}
 end
@@ -841,12 +999,12 @@ function loadPrefab( prefab, loadFlags, prefabIndex )
 
 	print( "Loading prefab:", prefab.name, "tagged:", prefab.tag )
 	local mergeCreations = bit.band( prefab.flags, MergeCreationFlag ) ~= 0
-	randomizePrefab( prefab, prefabTable )
+	RandomizePrefab( prefab, prefabTable )
 	local creations, prefabs, nodes =  sm.terrainTile.getContentFromPrefab( prefab.name, loadFlags )
 
 	for _,creation in ipairs( creations ) do
 
-		randomizeCreation( creation, blueprintTable )
+		RandomizeCreation( creation, blueprintTable )
 
 		creation.rot = prefab.rot * creation.rot
 		creation.pos = prefab.pos + (prefab.rot * creation.pos)
@@ -861,11 +1019,11 @@ function loadPrefab( prefab, loadFlags, prefabIndex )
 		subPrefab.rot = prefab.rot * subPrefab.rot
 		subPrefab.pos = prefab.pos + ( prefab.rot * ( subPrefab.pos * prefab.scale ) )
 		subPrefab.scale = prefab.scale * subPrefab.scale
-		
+
 		for _,tag in ipairs(prefab.tags) do
 			subPrefab.tags[#subPrefab.tags + 1] = tag
 		end
-		
+
 		if mergeCreations then
 			subPrefab.flags = bit.bor( subPrefab.flags, MergeCreationFlag )
 		end
@@ -874,14 +1032,14 @@ function loadPrefab( prefab, loadFlags, prefabIndex )
 	end
 
 	local nodeCount = g_nodeCount
-	
+
 	for _,node in ipairs( nodes ) do
 
 		node.rot = prefab.rot * node.rot
 		node.pos = prefab.pos + ( prefab.rot * ( node.pos * prefab.scale ) )
 		node.scale = node.scale * prefab.scale
 
-		if valueExists( node.tags, "CONNECTABLE" ) then
+		if node.params and node.params.connections then
 			node.params.connections.id = node.params.connections.id + g_nodeCount;
 
 			for index, value in ipairs(node.params.connections.otherIds) do
@@ -895,27 +1053,27 @@ function loadPrefab( prefab, loadFlags, prefabIndex )
 
 			nodeCount = math.max( node.params.connections.id, nodeCount )
 		end
-		
+
 		g_nodes[#g_nodes + 1] = node
 	end
 
 	g_nodeCount = nodeCount + 1
 end
 
-function prepareCell( cellX, cellY, loadFlags )
+function PrepareCell( cellX, cellY, loadFlags )
 
 	g_nodes = {}
 	-- This value needs to be larger then the number of connection nodes in the cell
 	g_nodeCount = 65536
 	g_creations = {}
-	
+
 	if SCALE_HACK == true then
 		return {}
 	end
-	
-	local id, tileCellOffsetX, tileCellOffsetY = getCellTileIdAndOffset( cellX, cellY )
-	if id ~= 0 then
-		local prefabs = sm.terrainTile.getPrefabsForCell( id, tileCellOffsetX, tileCellOffsetY )
+
+	local uid, tileCellOffsetX, tileCellOffsetY = GetCellTileUidAndOffset( cellX, cellY )
+	if not uid:isNil() then
+		local prefabs = sm.terrainTile.getPrefabsForCell( uid, tileCellOffsetX, tileCellOffsetY )
 		for prefabIndex, prefab in ipairs(prefabs) do
 			loadPrefab( prefab, loadFlags, prefabIndex )
 		end
@@ -923,16 +1081,16 @@ function prepareCell( cellX, cellY, loadFlags )
 
 end
 
-function getNodesForCell( cellX, cellY )
+function GetNodesForCell( cellX, cellY )
 	if SCALE_HACK == true then
 		return {}
 	end
 
 	local hasReflectionProbe = false
 
-	local id, tileCellOffsetX, tileCellOffsetY = getCellTileIdAndOffset( cellX, cellY )
-	if id ~= 0 then
-		local nodes = sm.terrainTile.getNodesForCell( id, tileCellOffsetX, tileCellOffsetY )
+	local uid, tileCellOffsetX, tileCellOffsetY = GetCellTileUidAndOffset( cellX, cellY )
+	if not uid:isNil() then
+		local nodes = sm.terrainTile.getNodesForCell( uid, tileCellOffsetX, tileCellOffsetY )
 		for _, node in ipairs(nodes) do
 			g_nodes[#g_nodes + 1] = node
 		end
@@ -940,30 +1098,27 @@ function getNodesForCell( cellX, cellY )
 		local lake = isLake( cellX, cellY )
 
 		for _, node in ipairs( g_nodes ) do
-			local rx, ry = rotateLocal( cellX, cellY, node.pos.x, node.pos.y )
+			local rx, ry = RotateLocal( cellX, cellY, node.pos.x, node.pos.y )
 
 			local x = cellX * CELL_SIZE + rx
 			local y = cellY * CELL_SIZE + ry
 
 			local height = node.pos.z + getCliffHeightAt( x, y )
-			if not lake or not valueExists( node.tags, "WATER" ) then
+			if not lake or not ValueExists( node.tags, "WATER" ) then
 				height = height + getElevationHeightAt( x, y )
 			end
 			node.pos = sm.vec3.new( rx, ry, height )
-			node.rot = getRotationStepQuat( cellX, cellY ) * node.rot
+			node.rot = GetRotationQuat( cellX, cellY ) * node.rot
 
-			hasReflectionProbe = hasReflectionProbe or valueExists( node.tags, "REFLECTION" )
+			RotateLocalWaypoint( cellX, cellY, node )
+
+			hasReflectionProbe = hasReflectionProbe or ValueExists( node.tags, "REFLECTION" )
 		end
 
 		if not hasReflectionProbe then
 			local x = ( cellX + 0.5 ) * CELL_SIZE
 			local y = ( cellY + 0.5 ) * CELL_SIZE
-			local node = {}
-			node.pos = sm.vec3.new( 32, 32, getElevationHeightAt( x, y ) + getCliffHeightAt( x, y ) + 4 )
-			node.rot = sm.quat.new( 0.707107, 0, 0, 0.707107 )
-			node.scale = sm.vec3.new( 64, 64, 64 )
-			node.tags = { "REFLECTION" }
-			g_nodes[#g_nodes + 1] = node
+			g_nodes[#g_nodes + 1] = CreateReflectionNode( getElevationHeightAt( x, y ) + getCliffHeightAt( x, y ) + 4 )
 		end
 
 		return g_nodes
@@ -973,23 +1128,23 @@ end
 
 ----------------------------------------------------------------------------------------------------
 
-function getCreationsForCell( cellX, cellY )
+function GetCreationsForCell( cellX, cellY )
 	if SCALE_HACK == true then
 		return {}
 	end
 
-	local id, tileCellOffsetX, tileCellOffsetY = getCellTileIdAndOffset( cellX, cellY )
-	if id ~= 0 then
-		local cellCreations = sm.terrainTile.getCreationsForCell( id, tileCellOffsetX, tileCellOffsetY )
+	local uid, tileCellOffsetX, tileCellOffsetY = GetCellTileUidAndOffset( cellX, cellY )
+	if not uid:isNil() then
+		local cellCreations = sm.terrainTile.getCreationsForCell( uid, tileCellOffsetX, tileCellOffsetY )
 		for _, cellCreation in ipairs(cellCreations) do
 
-			randomizeCreation( cellCreation, blueprintTable )
+			RandomizeCreation( cellCreation, blueprintTable )
 
 			g_creations[#g_creations + 1] = cellCreation
 		end
 
-		for i,creation in ipairs(g_creations) do
-			local rx, ry = rotateLocal( cellX, cellY, creation.pos.x, creation.pos.y )
+		for i,creation in ipairs( g_creations ) do
+			local rx, ry = RotateLocal( cellX, cellY, creation.pos.x, creation.pos.y )
 
 			local x = cellX * CELL_SIZE + rx
 			local y = cellY * CELL_SIZE + ry
@@ -1002,7 +1157,7 @@ function getCreationsForCell( cellX, cellY )
 				height = height + getElevationHeightAt( x, y )
 			end
 			creation.pos = sm.vec3.new( rx, ry, height )
-			creation.rot = getRotationStepQuat( cellX, cellY ) * creation.rot
+			creation.rot = GetRotationQuat( cellX, cellY ) * creation.rot
 		end
 
 		return g_creations
@@ -1013,23 +1168,23 @@ end
 
 ----------------------------------------------------------------------------------------------------
 
-function getDecalsForCell( cellX, cellY )
+function GetDecalsForCell( cellX, cellY )
 	if SCALE_HACK == true then
 		return {}
 	end
 
-	local id, tileCellOffsetX, tileCellOffsetY = getCellTileIdAndOffset( cellX, cellY )
-	if id ~= 0 then
-		local cellDecals = sm.terrainTile.getDecalsForCell( id, tileCellOffsetX, tileCellOffsetY )
-		for _, decal in ipairs(cellDecals) do
-			local rx, ry = rotateLocal( cellX, cellY, decal.pos.x, decal.pos.y )
+	local uid, tileCellOffsetX, tileCellOffsetY = GetCellTileUidAndOffset( cellX, cellY )
+	if not uid:isNil() then
+		local cellDecals = sm.terrainTile.getDecalsForCell( uid, tileCellOffsetX, tileCellOffsetY )
+		for _, decal in ipairs( cellDecals ) do
+			local rx, ry = RotateLocal( cellX, cellY, decal.pos.x, decal.pos.y )
 
 			local x = cellX * CELL_SIZE + rx
 			local y = cellY * CELL_SIZE + ry
 
 			local height = decal.pos.z + getElevationHeightAt( x, y ) + getCliffHeightAt( x, y )
 			decal.pos = sm.vec3.new( rx, ry, height )
-			decal.rot = getRotationStepQuat( cellX, cellY ) * decal.rot
+			decal.rot = GetRotationQuat( cellX, cellY ) * decal.rot
 		end
 
 		return cellDecals
@@ -1040,7 +1195,7 @@ end
 
 ----------------------------------------------------------------------------------------------------
 
-local TypeTags = { "MEADOW", "FOREST", "DESERT", "FIELD", "BURNTFOREST", "AUTUMNFOREST", "MOUNTAIN", "LAKE" }
+local TypeTags = { "MEADOW", "FOREST", "DESERT", "FIELD", "BURNTFOREST", "AUTUMNFOREST", "LAKE" }
 
 local PoiTags = {
 	[POI_MECHANICSTATION_MEDIUM] = "MECHANICSTATION",
@@ -1084,9 +1239,14 @@ local PoiTags = {
 	[POI_BUILDAREA_MEDIUM] = "BUILDAREA",
 
 	[POI_LAKE_UNDERWATER_MEDIUM] = "UNDERWATER_MEDIUM",
+
+	[POI_EXCAVATION] = "EXCAVATION",
+
+
+
 }
 
-function getTagsForCell( cellX, cellY )
+function GetTagsForCell( cellX, cellY )
 	if SCALE_HACK == true then
 		return {}
 	end
@@ -1098,9 +1258,9 @@ function getTagsForCell( cellX, cellY )
 		tags[#tags + 1] = TypeTags[type]
 	end
 
-	local id = getCellTileIdAndOffset( cellX, cellY )
-	if id ~= 0 then
-		local poiType = getPoiType( id )
+	local uid = GetCellTileUidAndOffset( cellX, cellY )
+	if not uid:isNil() then
+		local poiType = GetPoiType( uid )
 		if poiType then
 			local tag = PoiTags[poiType]
 			if tag then
@@ -1121,13 +1281,13 @@ end
 -- Tile Reader Path Getter
 ----------------------------------------------------------------------------------------------------
 
-function getTilePath( id )
+function GetTilePath( uid )
 
-	local tilePath = getTile( id )
+	local tilePath = GetPath( uid )
 	if tilePath then
 		return tilePath
 	end
 
 	-- Not found!
-	return "../Survival/Terrain/Tiles/ERROR.TILE"
+	return "$SURVIVAL_DATA/Terrain/Tiles/ERROR.TILE"
 end
