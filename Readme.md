@@ -15,7 +15,7 @@ https://the1killer.github.io/scrapmechanictilemap/
 1. Open `terrain_overworld.lua` from the downloaded files.
 1. Copy lines 132-157, `local cells` *...to...* `cells = nil   end`
 1. Open `terrain_overworld.lua` in your game files, e.x. C:\Program Files (x86)\Steam\steamapps\common\Scrap Mechanic\Survival\Scripts\terrain\terrain_overworld.lua
-1. Paste the lines into the game's terrain_overworld.lua, approx **line 71**, after `CreateCellTileStorageKeys()`
+1. Paste the lines into the game's terrain_overworld.lua, approx **line 130**, after `CreateCellTileStorageKeys()` within the `Load()` Function.
 1. Replace `tile_database.lua` in your game files with the one from the downloaded files. E.x. C:\Program Files (x86)\Steam\steamapps\common\Scrap Mechanic\Survival\Scripts\terrain\overworld\tile_database.lua
 1. Load your save game.
 1. Copy **cells.json** from your game files C:\Program Files (x86)\Steam\steamapps\common\Scrap Mechanic\Survival\ to the **html\assets\json directory** in the downloads.
@@ -53,7 +53,7 @@ Thanks to LionHeartBlue Gaming to making a tutorial video. Most people will need
 Remember to enclose the JSON with back ticks **\`**.
 <br/>
 <br/>
-[![Tutorial Video](http://i3.ytimg.com/vi/qkMIsQqdUmU/hqdefault.jpg)](https://youtu.be/qkMIsQqdUmU)
+[![Tutorial Video](https://img.youtube.com/vi/OXBzApCRwJA/sddefault.jpg))](https://www.youtube.com/watch?v=OXBzApCRwJA))
 
 
 <br/>
