@@ -129,31 +129,34 @@ function Load()
 		UpdateLocationStorage()
 		CreateCellTileStorageKeys()
 
-		local cells = {}
-		forEveryCell( function( cellX, cellY )
-			local cell = {}
-			cell["x"] = cellX
-			cell["y"] = cellY;
-			cell["tileid"] = GetLegacyID(GetCellTileUid( cellX, cellY )) -- modified by Arkanorian to work for update 0.6.0
-			cell["flags"] = g_cellData.flags[cellY][cellX]
-			cell["rotation"] = g_cellData.rotation[cellY][cellX]
-			-- cell["elevation"] = g_cellData.elevation[cellY][cellX]
-			-- cell["clifflevel"] = g_cellData.cliffLevel[cellY][cellX]
-			-- cell["offx"] = g_cellData.tileOffsetX[cellY][cellX]
-			-- cell["offy"] = g_cellData.tileOffsetY[cellY][cellX]
-			-- cell["celldebug"] = g_cellData.cellDebug[cellY][cellX]
-			-- cell["cornerdebug"] = g_cellData.cornerDebug[cellY][cellX]
-			-- cell["variation"] = sm.noise.intNoise2d( cellX, cellY, g_cellData.seed + 2854 )
+		local storage = sm.terrainGeneration.getTempData( "STORAGE_CELLJSON" ) or false
+		if storage == false then
+			local cells = {}
+			forEveryCell( function( cellX, cellY )
+				local cell = {}
+				cell["x"] = cellX
+				cell["y"] = cellY;
+				cell["tileid"] = GetLegacyID(GetCellTileUid( cellX, cellY )) -- modified by Arkanorian to work for update 0.6.0
+				cell["uid"] = tostring( GetCellTileUid( cellX, cellY ) )
+				cell["flags"] = g_cellData.flags[cellY][cellX]
+				cell["rotation"] = g_cellData.rotation[cellY][cellX]
 
-			cells[#cells+1] = cell
-		end )
-		if #cells > 0 then
-			cells[1]["bounds"] = g_cellData.bounds
-			cells[1]["seed"] = g_cellData.seed
-			-- print("Writing Cell Json");
-			sm.json.save( cells, "$SURVIVAL_DATA/".."cells.json" )
-			cells = nil;
-			-- print("Wrote Cell Json");
+				cells[#cells+1] = cell
+			end )
+			if #cells > 0 then
+				cells[1]["bounds"] = g_cellData.bounds
+				cells[1]["seed"] = g_cellData.seed
+				-- print("Writing Cell Json");
+				-- sm.json.save( cells, "$SURVIVAL_DATA/".."Scripts/terrain/".."cells.json" )
+				sm.log.info( "--- START COPYING AFTER THIS LINE FOR CELLS.JSON ---" )
+				local json = sm.json.writeJsonString( cells )
+				sm.log.info( json )
+				sm.log.info( "--- STOP COPYING BEFORE THIS LINE FOR CELLS.JSON ---" )
+				cells = nil;
+				json = nil;
+				-- print("Wrote Cell Json");
+				sm.terrainGeneration.setTempData( "STORAGE_CELLJSON" , true)
+			end
 		end
 
 		return true
