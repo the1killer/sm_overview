@@ -1,5 +1,8 @@
 <img src="https://i.imgur.com/orwkU5q.png" style="max-width:75%">
 
+# 0.6.6 Update Broke JSON
+Scrap Mechanic's Nov 0.6.6 update broke the JSON export to file method, for a workaround see the github issue with [workaround]. I have emailed the developers about the issue but with the holidays will probably be a while for a response.
+
 # Introduction
 This quickly outputs the world data of your scrap mechanic save game to a json file for display via leafletJS from pre-screenshotted tiles. Not quite as beautiful as my [older screenshot method], but SOOOOOoooooo much quicker. This method is somewhat future proof as well. New tiles will still be displayed just blank, but updates should only require a new download of the missing tiles images.
 
@@ -71,3 +74,4 @@ Scrap Mechanic is property of Axolot Games AB, I have no affiliation with them.
 [Download Link]: https://github.com/the1killer/sm_overview/archive/main.zip
 [older screenshot method]: https://github.com/the1killer/sm_overview_ahk
 [Donate]: https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=7JF52HNLJNHFE&item_name=SM+Overview+Donations&currency_code=USD
+[workaround]: https://github.com/the1killer/sm_overview/issues/17#issuecomment-1849092063
