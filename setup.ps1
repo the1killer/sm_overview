@@ -188,25 +188,25 @@ Good "Export patch injected."
 Write-Host ""
 
 # ---------- 5. clear the script cache ----------
-Info "Clearing script cache (this is what fixes 'the edit didn't take effect')..."
-$cacheRoots = @(
-    $SM,
-    (Join-Path $env:APPDATA  "Axolot Games\Scrap Mechanic"),
-    (Join-Path $env:LOCALAPPDATA "Axolot Games\Scrap Mechanic")
-) | Where-Object { $_ -and (Test-Path $_) }
-$deleted = 0
-foreach ($cr in $cacheRoots) {
-    Get-ChildItem -Path $cr -Recurse -File -Filter "core_data.cbo" -ErrorAction SilentlyContinue | ForEach-Object {
-        try { Remove-Item -LiteralPath $_.FullName -Force -ErrorAction Stop; $deleted++ } catch {}
-    }
-    Get-ChildItem -Path $cr -Recurse -Directory -Filter "Bundle" -ErrorAction SilentlyContinue | ForEach-Object {
-        try { Remove-Item -LiteralPath $_.FullName -Recurse -Force -ErrorAction Stop } catch {}
-    }
-}
-if ($deleted -gt 0) { Good "  cleared $deleted cache bundle(s)" } else { Warn "  no cache bundle found (fine - it'll build fresh)" }
-Warn "  Heads up: the next time Scrap Mechanic loads it'll be slower than usual"
-Warn "  while it rebuilds this cache. That's a one-time thing and completely normal."
-Write-Host ""
+# Info "Clearing script cache (this is what fixes 'the edit didn't take effect')..."
+# $cacheRoots = @(
+#     $SM,
+#     (Join-Path $env:APPDATA  "Axolot Games\Scrap Mechanic"),
+#     (Join-Path $env:LOCALAPPDATA "Axolot Games\Scrap Mechanic")
+# ) | Where-Object { $_ -and (Test-Path $_) }
+# $deleted = 0
+# foreach ($cr in $cacheRoots) {
+#     Get-ChildItem -Path $cr -Recurse -File -Filter "core_data.cbo" -ErrorAction SilentlyContinue | ForEach-Object {
+#         try { Remove-Item -LiteralPath $_.FullName -Force -ErrorAction Stop; $deleted++ } catch {}
+#     }
+#     Get-ChildItem -Path $cr -Recurse -Directory -Filter "Bundle" -ErrorAction SilentlyContinue | ForEach-Object {
+#         try { Remove-Item -LiteralPath $_.FullName -Recurse -Force -ErrorAction Stop } catch {}
+#     }
+# }
+# if ($deleted -gt 0) { Good "  cleared $deleted cache bundle(s)" } else { Warn "  no cache bundle found (fine - it'll build fresh)" }
+# Warn "  Heads up: the next time Scrap Mechanic loads it'll be slower than usual"
+# Warn "  while it rebuilds this cache. That's a one-time thing and completely normal."
+# Write-Host ""
 
 # ---------- 6. play ----------
 Line
@@ -217,7 +217,7 @@ Write-Host "  3. Let it finish loading (give it a few seconds in-world)"
 Write-Host "  4. Quit to desktop"
 Line
 if (YesNo "Launch Scrap Mechanic for you now?") {
-    Start-Process "steam://run/387990"
+    Start-Process "steam://run/387990//-dev"
     Info "  (launching via Steam...)"
 }
 Write-Host ""

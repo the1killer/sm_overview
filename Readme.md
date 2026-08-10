@@ -43,7 +43,7 @@ It will:
 
 1. find your Scrap Mechanic install (confirm with y/n),
 2. back up your original game scripts,
-3. patch in the export code and clear the script cache,
+3. patch in the export code
 4. wait while you launch the game, load your save, and quit,
 5. rebuild `cells.json`, flatten the tile images, and embed the data, then
 6. restore your original game scripts.

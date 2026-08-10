@@ -396,6 +396,7 @@ SMOverviewMap = (function() {
         if(poi) {
             content += `<br/>POI: ${poi}`
         }
+        content += `<br/><small>${cell.uid}</small>`;
 
         return content;
     }

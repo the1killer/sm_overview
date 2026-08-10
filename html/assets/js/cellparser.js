@@ -5,48 +5,33 @@ SMCellParser = (function() {
         var cells = new Array();
         var x=0,y=0;
         json.forEach((cell) => {
-                // var cellX = coord.cx,cellY = coord.cy;
-                // var x = coord.x,y = coord.y;
-                // var cell = {};
-                // cell.x = cellX;
-                // cell.y = cellY;
-                // cell.xidx = x;
-                // cell.yidx = y;
-
-                // if(y%10 == 0) {
-                //     console.log(cellX,cellY,x,y);
-                // }
-                
-                // var xLookup = cellX;
-                // var yLookup = cellY;
                 var xLookup = cell.x;
                 var yLookup = cell.y;
-                // if(xLookup < 0) {
-                //     xLookup = x;
-                //     // xLookup = spanX - xLookup;
-                // }
-                // if(yLookup < 0) {
-                //     yLookup = y;
-                //     // yLookup = spanY - yLookup;
-                // }
-
+                
                 try {
-                    // cell.tileId = json.tileId[yLookup][xLookup];
+                    if(cell.tileid == undefined) {
+                        let id = getTileIDFromGuid(cell.uid);
+                        if(id) {
+                            cell.tileid = id;
+                        }
+                    }
                     let pt = getPoiType(cell.tileid);
                     if(pt) {
                         cell.poiType = pt;
+                    } else {
+                        try {
+                            let poi = GUIDPOIS[cell.uid];
+                            if(poi) {
+                                cell.poiType = poi;
+                            }
+                        } catch(e) {}
                     }
                 } catch (err) {
                     console.log(err)
                     // console.log("tileId not found for "+x+","+y);
                 }
-                // try {
-                //     cell.cellDebug = json.cellDebug[yLookup][xLookup];
-                // } catch (err) {
-                //     // console.log("cellDebug not found for "+x+","+y);
-                // }
+                
                 try {
-                    // cell.flags = json.flags[yLookup][xLookup];
                     var ctype = getCellType(cell.flags)
                     cell.type = TypeTags[ctype];
                     // if cellX >= -46 and cellX < -46 + 20 and cellY >= -46 and cellY < -46 + 16 then
@@ -57,31 +42,7 @@ SMCellParser = (function() {
                     // console.log(err);
                     // exit();
                 }
-                // try {
-                //     cell.rotation = json.rotation[yLookup][xLookup];
-                // } catch (err) {
-                //     // console.log("rotation not found for "+x+","+y);
-                // }
-                // try {
-                //     cell.elevation = json.elevation[yLookup][xLookup];
-                // } catch (err) {
-                //     // console.log("elevation not found for "+x+","+y);
-                // }
-                // try {
-                //     cell.cornerDebug = json.cornerDebug[yLookup][xLookup];
-                // } catch (err) {
-                //     // console.log("cornerDebug not found for "+x+","+y);
-                // }
-                // try {
-                //     cell.tileOffsetX = json.tileOffsetX[yLookup][xLookup];
-                // } catch (err) {
-                //     // console.log("tileOffsetX not found for "+x+","+y);
-                // }
-                // try {
-                //     cell.tileOffsetY = json.tileOffsetY[yLookup][xLookup];
-                // } catch (err) {
-                //     // console.log("tileOffsetY not found for "+x+","+y);
-                // }
+
                 try {
                     cell.roads = getCellRoads(cell.flags)
                 } catch (err) {
@@ -92,18 +53,6 @@ SMCellParser = (function() {
                 // console.log(cell);
                 cells.push(cell);
                 // console.log("push");
-                // x+=1;
-                // break;
-                // y+=1;
-            // }
-            // })
-            // y=0
-            // x+=1;
-
-            // x=0;
-            // y+=1;
-            // break;
-        // }
         })
 
         console.log("cell count: "+cells.length);
@@ -124,6 +73,14 @@ SMCellParser = (function() {
             return POIS[poiType]
         }
         return null
+    }
+
+    function getTileIDFromGuid(uid) {
+        let tid = GUIDIDS[uid];
+        if(tid) {
+            return tid;
+        }
+        return null;
     }
 
     function getCellRoads(flags) {
@@ -268,7 +225,26 @@ SMCellParser = (function() {
     POIS[1] = "POI_RANDOM_PLACEHOLDER"
     POIS[99] = "POI_TEST"
 
-    
+    ////////////////////////////////////////////////////////////////////////////////
+    // GUID POIs
+    ////////////////////////////////////////////////////////////////////////////////
+
+    var GUIDPOIS = {};
+    GUIDPOIS['3ef31461-6f4e-4fb5-938d-875fb837d736'] = "POI_MECHANICSTATION_MEDIUM";
+    GUIDPOIS['7d7556b3-0dc7-4b95-9d92-731013b19fc0'] = "POI_HIDEOUT_XL";
+    GUIDPOIS['ff1f81e2-c68f-4421-ab49-3a68926e3947'] = "POI_CRASHSITE_AREA";
+    GUIDPOIS['943c232a-a780-4099-bffc-54ce08c184c5'] = "POI_CRASHSITE_AREA";
+
+
+    ////////////////////////////////////////////////////////////////////////////////
+    // Guids to old tile IDs for fixing starting area tiles, maybe more in the future
+    ////////////////////////////////////////////////////////////////////////////////
+
+    var GUIDIDS = {};
+    GUIDIDS['28c8f354-3919-46e4-a311-6c3ceee5b5d9'] = 10101;
+    GUIDIDS['943c232a-a780-4099-bffc-54ce08c184c5'] = 10102;
+    GUIDIDS['baf427f1-2bb1-41e8-8868-44fc12af5590'] = 10103;
+
 
     return {
         parse
