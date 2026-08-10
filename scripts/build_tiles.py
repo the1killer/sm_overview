@@ -45,7 +45,9 @@ def rectify(path, size):
     quad = diamond_quad(im)
     if quad is None:
         return None
-    return im.transform((size, size), Image.QUAD, quad, resample=Image.BICUBIC)
+    # Final map orientation expects a 90-degree clockwise rotation.
+    flat = im.transform((size, size), Image.QUAD, quad, resample=Image.BICUBIC)
+    return flat.transpose(Image.ROTATE_270)
 
 def main():
     ap = argparse.ArgumentParser()
