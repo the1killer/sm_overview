@@ -154,6 +154,12 @@ SMOverviewMap = (function() {
                     let endy = starty + ((size) * mod)
                     let poiUrl = getPoiUrl(cell.poiType,cell.tileid,x,y);
                     if(!poiUrl) {
+                        var turl = getTileURL(cell.tileid,cell.x,cell.y);
+                        // sm_overview: fall back to the game's own tile preview PNG, keyed by uid.
+                        // Covers newer tiles that have no legacy id / no repo screenshot.
+                        if(!turl && cell.uid) {
+                            poiUrl = './assets/img/tiles_uid/' + cell.uid + '.png';
+                        }
                         if(cell.type != "LAKE" && cell.poiType != "POI_CRASHSITE_AREA") {
                             console.log(`Missing POI Image at ${x},${y} for id ${cell.tileid} ${cell.poiType}`)
                         }
@@ -574,14 +580,27 @@ SMOverviewMap = (function() {
         // "POI_ROAD":1,
         "POI_CRASHSITE_AREA":2,
         "POI_BUILDAREA_MEDIUM":2,
+        "POI_BUILDERQUEST_SLEDGEHAMMER_01":2,
+        "POI_BUILDERQUEST_STEELBRIDGE_01":2,
+        "POI_BUNK_INVESTIGATION_QUEST":2,
         "POI_MECHANICSTATION_MEDIUM":2,
         "POI_LABYRINTH_MEDIUM":2,
         "POI_CHEMLAKE_MEDIUM":2,
         "POI_RUIN_MEDIUM":2,
+        "POI_LAKE_RUIN_01":2,
+        "POI_LAKE_RUIN_02":2,
+        "POI_LAKE_RUIN_03":2,
+        "POI_GROWLAB_01":4,
+        "POI_MINIDUNGEON_OVERWORLD_ENTRANCE_03":4,
+        "POI_MINIDUNGEON_OVERWORLD_ENTRANCE_04":4,
+        "POI_MINIDUNGEON_OVERWORLD_ENTRANCE_07":4,
+        "POI_FOREST_RANDOM_01":2,
         "POI_FOREST_RUIN_MEDIUM":2,
         "POI_CAPSULESCRAPYARD_MEDIUM":2,
+        "POI_OILLAKE_DESERT":2,
         "POI_PACKINGSTATIONVEG_MEDIUM": 2,
         "POI_PACKINGSTATIONFRUIT_MEDIUM": 2,
+        "POI_QUEST_RUIN_AUTUMNFOREST_01": 2,
         "POI_LAKE_UNDERWATER_MEDIUM": 2,
         "POI_CAMP_LARGE":4,
         "POI_CRASHEDSHIP_LARGE":4,
