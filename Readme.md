@@ -3,15 +3,15 @@
 Generate a top-down overview map of your Scrap Mechanic survival world and view
 it in the browser (leafletJS).
 
-This is an updated, maintained take on **[the1killer/sm_overview]** — the original
-stopped working after Scrap Mechanic's 0.6.6 update, and the game has changed a
-few times since. It keeps the same idea and file format, but the export and the
-tile imagery both work differently now (see *What's different* below). All credit
-for the original tool and the map front-end goes to the1killer.
+## 1.0 Update
+
+Thanks to **[@JoDotNet](https://github.com/JoDotNet)** for his amazing setup and log capture scripts. 
+This has made getting the map working much easier, especially for non-technical users.
+The export and the tile imagery both work differently now (see *What's different* below). 
 
 ## What's different from the original
 
-- **Works on current Scrap Mechanic.** 0.6.6 sandboxed `sm.json.save`, so writing
+- **Works on 1.0 Scrap Mechanic.** 0.6.6 sandboxed `sm.json.save`, so writing
   `cells.json` straight to disk stopped working. The cell data is now emitted to
   the game log and rebuilt into `cells.json` afterwards.
 - **Version-safe patching.** Instead of copying pre-patched Lua files over yours
@@ -44,7 +44,7 @@ It will:
 1. find your Scrap Mechanic install (confirm with y/n),
 2. back up your original game scripts,
 3. patch in the export code
-4. wait while you launch the game, load your save, and quit,
+4. wait while you launch the game with dev mode, load your save, and quit,
 5. rebuild `cells.json`, flatten the tile images, and embed the data, then
 6. restore your original game scripts.
 
@@ -95,8 +95,9 @@ py scripts\patch_game.py --sm "C:\...\Scrap Mechanic" --unpatch
 
 ## Credits & license
 
-Original **sm_overview** by **the1killer** — https://github.com/the1killer/sm_overview
-Tutorial video by LionHeartBlue Gaming (linked from the original repo).
+**sm_overview** by **the1killer** — https://github.com/the1killer/sm_overview
+
+**setup.ps1** and **build_tiles.py** by JoDotNet — https://github.com/JoDotNet
 
 Licensed under **Creative Commons Attribution-NonCommercial-ShareAlike 4.0**
 (CC BY-NC-SA 4.0), the same license as the original. See `LICENSE`.
