@@ -591,9 +591,11 @@ SMOverviewMap = (function() {
         "POI_LAKE_RUIN_02":2,
         "POI_LAKE_RUIN_03":2,
         "POI_GROWLAB_01":4,
+        "POI_GROWLAB_02":4,
+        "POI_GROWLAB_03":4,
+        "POI_GROWLAB_06":8,
         "POI_MINIDUNGEON_OVERWORLD_ENTRANCE_03":4,
         "POI_MINIDUNGEON_OVERWORLD_ENTRANCE_04":4,
-        "POI_MINIDUNGEON_OVERWORLD_ENTRANCE_07":4,
         "POI_FOREST_RANDOM_01":2,
         "POI_FOREST_RUIN_MEDIUM":2,
         "POI_CAPSULESCRAPYARD_MEDIUM":2,
@@ -610,7 +612,8 @@ SMOverviewMap = (function() {
         "POI_WAREHOUSE4_LARGE":4,
         "POI_HIDEOUT_XL":8,
         "POI_RUINCITY_XL": 8,
-        "POI_SILODISTRICT_XL": 8
+        "POI_SILODISTRICT_XL": 8,
+        "POI_SURVIVALSTARTAREA_BOSSMOUNTAIN_01": 2
     };
 
     function getMap(){ return map;}

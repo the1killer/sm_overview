@@ -271,7 +271,7 @@ SMCellParser = (function() {
     GUIDPOIS['3ffa9284-021e-4679-8c61-6c35b04361f4'] = "POI_BUNK_INVESTIGATION_QUEST"; // BunkInvestigationQuest_128_01
     GUIDPOIS['4283ed68-9811-4fc6-91b6-156fda5c444f'] = "POI_WAREHOUSE2_LARGE"; // Warehouse_Exterior_2Floors_256_04_NEW
     GUIDPOIS['457232e5-8233-4dc8-8565-3433405ecd77'] = "POI_WAREHOUSE2_LARGE"; // Warehouse_Exterior_2Floors_256_02_NEW
-    GUIDPOIS['465b42d9-4db1-4b10-925b-8d517ad37edb'] = "POI_OilPool_Desert"; // OilPool_Desert_64_02
+    GUIDPOIS['465b42d9-4db1-4b10-925b-8d517ad37edb'] = "POI_OILPOOL_DESERT_02"; // OilPool_Desert_64_02
     GUIDPOIS['4df0a671-7c8c-4db7-9a6d-3be6e987731e'] = "POI_CHEMLAKE_MEDIUM"; // ChemicalLake_128_03
     GUIDPOIS['4efb5dcb-6f39-4648-af7c-26433cb31a18'] = "POI_FOREST_RANDOM_04"; // Random_Forest_64_04
     GUIDPOIS['5174bec6-0c87-4a03-abfd-21e88c3d1e8a'] = "POI_KIOSK_01"; // Kiosk_64_01
@@ -299,7 +299,7 @@ SMCellParser = (function() {
     GUIDPOIS['7736cd40-0adf-459b-8ffc-d0fa4caa5f59'] = "POI_CRASHEDSHIP_LARGE"; // CrashedShip_256_01
     GUIDPOIS['7ba6fefb-8a07-49b8-b61f-a4d4305ecb47'] = "POI_RUIN_11"; // Ruin_Meadow_64_11
     GUIDPOIS['7d7556b3-0dc7-4b95-9d92-731013b19fc0'] = "POI_HIDEOUT_XL"; // Hideout_512_01
-    GUIDPOIS['84b61087-2a16-41ee-b23f-56aa4ff5d056'] = "POI_DESERT_RANDOM"; // OilPool_Desert_64_01
+    GUIDPOIS['84b61087-2a16-41ee-b23f-56aa4ff5d056'] = "POI_OILPOOL_DESERT_01"; // OilPool_Desert_64_01
     GUIDPOIS['886a58f4-305e-458b-adff-7da04b161707'] = "POI_LAKE_RANDOM"; // Random_Lake_64_01
     GUIDPOIS['887b1866-009d-430d-923c-53f7f6e21f4c'] = "POI_WAREHOUSE2_LARGE"; // Warehouse_Exterior_2Floors_256_01_NEW
     GUIDPOIS['8a2d4fa6-d97a-46e8-b7de-198b9eb54353'] = "POI_FARMINGPATCH"; // FarmingPatch_64_03
@@ -358,14 +358,20 @@ SMCellParser = (function() {
     GUIDPOIS['f7862697-5c60-412d-8508-2e37e8ec7d16'] = "POI_FOREST_CAMP_05"; // CampingSpot_Forest_64_05
     GUIDPOIS['f9ea368e-9873-4c39-a3e1-7dd1cbba6cd5'] = "POI_RANDOM_MEADOW_01"; // Random_Meadow_128_01
     GUIDPOIS['fd3351f8-9af6-4c58-933d-48185fe2c151'] = "POI_KIOSK_FOREST_01"; // Kiosk_Forest_64_01
+    
     GUIDPOIS['ff1f81e2-c68f-4421-ab49-3a68926e3947'] = "POI_CRASHSITE_AREA";
+    GUIDPOIS['5deb2830-b52e-40af-91c2-e53aee6c5165'] = "POI_SURVIVALSTARTAREA_BOSSMOUNTAIN_01"; // SurvivalStartArea_BossMountain_01.tile
 
     GUIDPOIS['a47695ef-2028-44c7-8247-5fcad4e10bf8'] = "POI_QUEST_RUIN_AUTUMNFOREST_01"; // Ruin_AutumnForest_RuinsQuest_128_01
 
     GUIDPOIS['e70e6ba1-29a3-40a4-9ec3-cc2ed60a69c9'] = "POI_GROWLAB_01"; // Minidungeon_Overworld_Entrance_DungeonQuest_256_01
-    GUIDPOIS['312e8d1c-de9c-479d-861a-cace1cb480f7'] = "POI_MINIDUNGEON_OVERWORLD_ENTRANCE_03"; // MiniDungeon_Overworld_Entrance_256_03
+    GUIDPOIS['d159bbf6-7b87-4073-8da7-c6cc3b85e4b5'] = "POI_GROWLAB_02"; // Minidungeon_Overworld_Entrance_256_07
+    GUIDPOIS['312e8d1c-de9c-479d-861a-cace1cb480f7'] = "POI_GROWLAB_03"; // MiniDungeon_Overworld_Entrance_256_03
+    GUIDPOIS['8e1538ae-6169-4053-b9ae-d80258c6fb3b'] = "POI_GROWLAB_06"; // Minidungeon_OverworldEntrance_Water_512_01
     GUIDPOIS['b5b956c1-bab0-4bbe-abb0-e0ab8d3f1fab'] = "POI_MINIDUNGEON_OVERWORLD_ENTRANCE_04"; // Minidungeon_Overworld_Entrance_256_04
-    GUIDPOIS['d159bbf6-7b87-4073-8da7-c6cc3b85e4b5'] = "POI_MINIDUNGEON_OVERWORLD_ENTRANCE_07"; // Minidungeon_Overworld_Entrance_256_07
+    
+
+    GUIDPOIS['3d8544c6-6439-4fa4-98f0-ca6d172af467'] = "OVERWORLDTOUNDERGROUND_SMALLELEVATOR"; // OverworldToUnderground_SmallElevator_64_01
 
     GUIDPOIS['6c57b05d-36c7-46df-ae45-7403f756199d'] = "POI_BUILDERQUEST_TOTEBOTKEY_01"; // BuilderQuest_Totebotkey_64_01
     GUIDPOIS['bb5acabd-562f-449f-bece-5a8351c34b6e'] = "POI_BUILDERQUEST_WOCHOUSE_01"; // BuilderQuest_Wochouse_64_01
