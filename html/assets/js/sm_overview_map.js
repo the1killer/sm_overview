@@ -154,6 +154,12 @@ SMOverviewMap = (function() {
                     let endy = starty + ((size) * mod)
                     let poiUrl = getPoiUrl(cell.poiType,cell.tileid,x,y);
                     if(!poiUrl) {
+                        var turl = getTileURL(cell.tileid,cell.x,cell.y);
+                        // sm_overview: fall back to the game's own tile preview PNG, keyed by uid.
+                        // Covers newer tiles that have no legacy id / no repo screenshot.
+                        if(!turl && cell.uid) {
+                            poiUrl = './assets/img/tiles_uid/' + cell.uid + '.png';
+                        }
                         if(cell.type != "LAKE" && cell.poiType != "POI_CRASHSITE_AREA") {
                             console.log(`Missing POI Image at ${x},${y} for id ${cell.tileid} ${cell.poiType}`)
                         }
@@ -262,6 +268,11 @@ SMOverviewMap = (function() {
                     // div.innerHTML += "<div class='tileid'>"+cell.tileid+"</div>"
 
                     var turl = getTileURL(cell.tileid,cell.x,cell.y);
+                    // sm_overview: fall back to the game's own tile preview PNG, keyed by uid.
+                    // Covers newer tiles that have no legacy id / no repo screenshot.
+                    if(!turl && cell.uid) {
+                        turl = './assets/img/tiles_uid/' + cell.uid + '.png';
+                    }
                     if(!turl) {
                         if(cell.type != "LAKE" && POI_SIZES[cell.poiType] == undefined) {
                             console.log(`Missing tile at ${x},${y*-1} for id ${cell.tileid} ${cell.type}`)
@@ -273,8 +284,11 @@ SMOverviewMap = (function() {
                     if(turl) {
                         tile.classList.remove(cell.type.toLowerCase())
                         var img = document.createElement('img');
-                        img.src = turl
                         img.classList.add('tileimg')
+                        // sm_overview: if the image is missing, drop it and restore the
+                        // flat biome colour rather than showing a broken-image icon.
+                        img.onerror = function(){ this.remove(); tile.classList.add(cell.type.toLowerCase()); };
+                        img.src = turl
                         inner.appendChild(img);
                         if(cell.rotation != 0) {
                             img.classList.add('rot-' + cell.rotation)
@@ -388,6 +402,7 @@ SMOverviewMap = (function() {
         if(poi) {
             content += `<br/>POI: ${poi}`
         }
+        content += `<br/><small>${cell.uid}</small>`;
 
         return content;
     }
@@ -565,14 +580,29 @@ SMOverviewMap = (function() {
         // "POI_ROAD":1,
         "POI_CRASHSITE_AREA":2,
         "POI_BUILDAREA_MEDIUM":2,
+        "POI_BUILDERQUEST_SLEDGEHAMMER_01":2,
+        "POI_BUILDERQUEST_STEELBRIDGE_01":2,
+        "POI_BUNK_INVESTIGATION_QUEST":2,
         "POI_MECHANICSTATION_MEDIUM":2,
         "POI_LABYRINTH_MEDIUM":2,
         "POI_CHEMLAKE_MEDIUM":2,
         "POI_RUIN_MEDIUM":2,
+        "POI_LAKE_RUIN_01":2,
+        "POI_LAKE_RUIN_02":2,
+        "POI_LAKE_RUIN_03":2,
+        "POI_GROWLAB_01":4,
+        "POI_GROWLAB_02":4,
+        "POI_GROWLAB_03":4,
+        "POI_GROWLAB_06":8,
+        "POI_MINIDUNGEON_OVERWORLD_ENTRANCE_03":4,
+        "POI_MINIDUNGEON_OVERWORLD_ENTRANCE_04":4,
+        "POI_FOREST_RANDOM_01":2,
         "POI_FOREST_RUIN_MEDIUM":2,
         "POI_CAPSULESCRAPYARD_MEDIUM":2,
+        "POI_OILLAKE_DESERT":2,
         "POI_PACKINGSTATIONVEG_MEDIUM": 2,
         "POI_PACKINGSTATIONFRUIT_MEDIUM": 2,
+        "POI_QUEST_RUIN_AUTUMNFOREST_01": 2,
         "POI_LAKE_UNDERWATER_MEDIUM": 2,
         "POI_CAMP_LARGE":4,
         "POI_CRASHEDSHIP_LARGE":4,
@@ -582,7 +612,8 @@ SMOverviewMap = (function() {
         "POI_WAREHOUSE4_LARGE":4,
         "POI_HIDEOUT_XL":8,
         "POI_RUINCITY_XL": 8,
-        "POI_SILODISTRICT_XL": 8
+        "POI_SILODISTRICT_XL": 8,
+        "POI_SURVIVALSTARTAREA_BOSSMOUNTAIN_01": 2
     };
 
     function getMap(){ return map;}

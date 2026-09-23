@@ -1,77 +1,107 @@
-<img src="https://i.imgur.com/orwkU5q.png" style="max-width:75%">
+# sm_overview (updated)
 
-# 0.6.6 Update Broke JSON
-Scrap Mechanic's Nov 0.6.6 update broke the JSON export to file method, for a workaround see the github issue with [workaround]. I have emailed the developers about the issue but with the holidays will probably be a while for a response.
+Generate a top-down overview map of your Scrap Mechanic survival world and view
+it in the browser (leafletJS).
 
-# Introduction
-This quickly outputs the world data of your scrap mechanic save game to a json file for display via leafletJS from pre-screenshotted tiles. Not quite as beautiful as my [older screenshot method], but SOOOOOoooooo much quicker. This method is somewhat future proof as well. New tiles will still be displayed just blank, but updates should only require a new download of the missing tiles images.
+## 1.0 Update
 
-# Example
-https://the1killer.github.io/scrapmechanictilemap/
+Thanks to **[@JoDotNet](https://github.com/JoDotNet)** for his amazing setup and log capture scripts. 
+This has made getting the map working much easier, especially for non-technical users.
+The export and the tile imagery both work differently now (see *What's different* below). 
 
-# INSTRUCTIONS
+## What's different from the original
 
-!!!! BACKUP YOUR SAVE, not responsible for any issues !!!!
+- **Works on 1.0 Scrap Mechanic.** 0.6.6 sandboxed `sm.json.save`, so writing
+  `cells.json` straight to disk stopped working. The cell data is now emitted to
+  the game log and rebuilt into `cells.json` afterwards.
+- **Version-safe patching.** Instead of copying pre-patched Lua files over yours
+  (which breaks whenever the game updates), it injects the small export block into
+  *your* current game scripts using stable anchors, and can cleanly remove it.
+- **Every tile has an image.** The original showed newer tiles as blank. This
+  sources a preview image for every tile from the game's own files, flattens the
+  isometric thumbnails into top-down tiles, and keys them by tile UUID — so new
+  tiles fill in, and it keeps working across updates. Tiles with no image fall
+  back to a flat biome colour.
+- **One guided installer** (`setup.ps1`) that does the whole flow, plus automatic
+  embedding of the JSON so the map opens straight from `index.html`.
 
-1. **Really backup your save!**
-1. Download this repoistory, green "Code" button on the top right, or [Download Link]
-1. Open `terrain_overworld.lua` from the downloaded files.
-1. Copy lines 132-157, `local cells` *...to...* `cells = nil   end`
-1. Open `terrain_overworld.lua` in your game files, e.x. C:\Program Files (x86)\Steam\steamapps\common\Scrap Mechanic\Survival\Scripts\terrain\terrain_overworld.lua
-1. Paste the lines into the game's terrain_overworld.lua, approx **line 130**, after `CreateCellTileStorageKeys()` within the `Load()` Function.
-1. Replace `tile_database.lua` in your game files with the one from the downloaded files. E.x. C:\Program Files (x86)\Steam\steamapps\common\Scrap Mechanic\Survival\Scripts\terrain\overworld\tile_database.lua
-1. Load your save game.
-1. Copy **cells.json** from your game files C:\Program Files (x86)\Steam\steamapps\common\Scrap Mechanic\Survival\ to the **html\assets\json directory** in the downloads.
-1. <u>**If hosting on a webserver**</u>
-    1. Copy all the files under **html/** to your webserver and open index.html and good to go.
-1. <u>**If viewing locally**</u>
-    1. Open **cells.json**, select all text (ctrl-a), copy all text
-    1. Paste text into https://codebeautify.org/jsonminifier and click "minify/compress" then copy the resulting text on the right
-    1. Open **html/index.html**, on line 26 `SMOverviewMap.init();` add two back ticks( ` ) inside the parentheses
-    1. Paste the text from Part 2 inbetween the backticks. becomes `SMOverviewMap.init(`\``[[{......`\``);`
-    1. Open **html/index.html** to view your map
-1. If you wish, remove or comment (--) the added lines in terrain_overworld.lua to improve game loading times
+## Requirements
 
+- Scrap Mechanic (installed via Steam)
+- Windows PowerShell (built into Windows)
+- Python 3 — https://www.python.org/downloads/ (tick **Add to PATH**)
 
-## Some things to note
-- Terrain height not really shown.
-- Game updates will remove the lua changes, requiring you to re-add them
-- How to setup your own free [GitHub website]
-- I think there could be some missing road/cliff tiles as there are many possibilties on how they mesh with eachother. Create an issue with your map seed and I can try to capture them.
+## Quick start
 
+From this folder, in PowerShell:
 
-# Changelog
-- v1.0.0
-    - Initial Release
+```powershell
+powershell -ExecutionPolicy Bypass -File .\setup.ps1
+```
 
-# Donation
-If you love this project and want to see more features give the developer a cup of coffee!
+It will:
 
-[![paypal](https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=7JF52HNLJNHFE&item_name=SM+Overview+Donations&currency_code=USD)
+1. find your Scrap Mechanic install (confirm with y/n),
+2. back up your original game scripts,
+3. patch in the export code
+4. wait while you launch the game with dev mode, load your save, and quit,
+5. rebuild `cells.json`, flatten the tile images, and embed the data, then
+6. restore your original game scripts.
 
+Open `html/index.html` when it's done. Re-run any time after exploring more.
 
-# Tutorial Video
-Thanks to LionHeartBlue Gaming to making a tutorial video. Most people will need **Option 2** listed above and in the video. 
-<br/>
-Remember to enclose the JSON with back ticks **\`**.
-<br/>
-<br/>
-[![Tutorial Video](https://img.youtube.com/vi/OXBzApCRwJA/sddefault.jpg))](https://www.youtube.com/watch?v=OXBzApCRwJA))
+## How it works
 
+`patch_game.py` injects a small block into `terrain_overworld.lua` (inside
+`Load()`) that walks the loaded cells and prints them as JSON between two markers
+in the game log, plus three small additions to `tile_database.lua` so each cell
+can report a legacy tile id. `extract_cells_json.py` pulls that JSON back out of
+the newest log and writes `cells.json`. `build_tiles.py` reads the game's tile
+preview PNGs (`Survival/Terrain/Tiles/<biome>/<uid>.png`), un-rotates each
+isometric diamond into a flat top-down square, and writes them to
+`html/assets/img/tiles_uid/` keyed by UUID. The map (`sm_overview_map.js`) uses
+the original screenshots where they exist and falls back to the UUID tile,
+then to a flat biome colour.
 
-<br/>
-<br/>
-<br/>
-<br/>
-<br/>
-<a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/"><img alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by-nc-sa/4.0/88x31.png" /></a><br />This work is licensed under a <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/">Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License</a>.
+## Notes
 
-Scrap Mechanic is property of Axolot Games AB, I have no affiliation with them.
+- **Game updates overwrite the patched scripts.** Re-run `setup.ps1` afterwards.
+  You can also restore stock scripts any time via Steam -> right-click Scrap
+  Mechanic -> Properties -> Installed Files -> *Verify integrity of game files*.
+- **Deep 3D tiles** (excavation, ravine, underground, boss train, cinematic)
+  don't flatten cleanly from a perspective thumbnail, so they're left as flat
+  biome colour by default. Pass `--skip-folders ""` to `build_tiles.py` to
+  convert them anyway.
+- **Terrain height** isn't really represented (same as the original).
+- **First load is slower.** Clearing the script cache (needed so the game picks
+  up the patch) means Scrap Mechanic rebuilds it on the next launch, so that one
+  load takes longer than usual. This happens once after patching and once more
+  after the originals are restored - both normal.
+- **Local vs hosted:** `setup.ps1` embeds the JSON into `index.html` so it opens
+  over `file://`. If you host `html/` on a real web server instead, use the
+  pristine `index.html` (the `$.getJSON` fetch of `assets/json/cells.json` works
+  there).
 
-[//]: # (Links)
-[AutoHotKey]: https://www.autohotkey.com/
-[GitHub website]: https://pages.github.com/
-[Download Link]: https://github.com/the1killer/sm_overview/archive/main.zip
-[older screenshot method]: https://github.com/the1killer/sm_overview_ahk
-[Donate]: https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=7JF52HNLJNHFE&item_name=SM+Overview+Donations&currency_code=USD
-[workaround]: https://github.com/the1killer/sm_overview/issues/17#issuecomment-1849092063
+## Manual patching / removal
+
+You don't need this if you use `setup.ps1`, but the pieces are usable on their own:
+
+```powershell
+# patch (in place, idempotent):
+py scripts\patch_game.py --sm "C:\Program Files (x86)\Steam\steamapps\common\Scrap Mechanic"
+# remove the patch cleanly:
+py scripts\patch_game.py --sm "C:\...\Scrap Mechanic" --unpatch
+```
+
+## Credits & license
+
+**sm_overview** by **the1killer** — https://github.com/the1killer/sm_overview
+
+**setup.ps1** and **build_tiles.py** by JoDotNet — https://github.com/JoDotNet
+
+Licensed under **Creative Commons Attribution-NonCommercial-ShareAlike 4.0**
+(CC BY-NC-SA 4.0), the same license as the original. See `LICENSE`.
+
+Scrap Mechanic is property of Axolot Games AB; no affiliation.
+
+[the1killer/sm_overview]: https://github.com/the1killer/sm_overview

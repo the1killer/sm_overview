@@ -1,0 +1,45 @@
+sm_overview - quick start
+=========================
+
+You need:
+  - Scrap Mechanic (installed via Steam)
+  - Python 3  (https://www.python.org/downloads/  - tick "Add to PATH")
+
+The map (the "html" folder) is included in this package - you don't need to
+supply it. Outputs are written straight into it.
+
+Run it:
+  1. Right-click setup.ps1 is NOT enough. Open PowerShell in this folder and run:
+
+         powershell -ExecutionPolicy Bypass -File .\setup.ps1
+
+  2. Answer the questions (install folder, map folder, backup location).
+  3. Confirm the detected Scrap Mechanic folder (y/n).
+  4. When it says so, launch Scrap Mechanic, load your save, let it load, quit.
+  5. Press Enter - it builds cells.json and the tile images automatically.
+  6. Open html\index.html (the script prints the full path).
+
+What it does, in order:
+  - backs up your original game scripts to your Desktop
+  - injects the export patch + clears the script cache
+  - (you play: load save, quit)
+  - rebuilds assets\json\cells.json from the game log
+  - rebuilds assets\img\tiles_uid\ from the game's own tile images
+  - restores your original game scripts
+
+Notes:
+  - The first game load after patching is slower than usual (the cache is
+    rebuilding). That's normal and happens once; same again after restore.
+  - Deep 3D tiles (excavation, ravine, underground...) stay as flat biome colour;
+    they don't flatten cleanly. See README.md to include them anyway.
+  - After it finishes you can also Verify Integrity of Game Files in Steam to be
+    100% sure the game is back to stock.
+  - Run it again any time to refresh the map after exploring more.
+
+Files in this package:
+  setup.ps1                     the guided installer/runner
+  scripts\extract_cells_json.py rebuilds cells.json from the game log
+  scripts\build_tiles.py        flattens the game's tile images
+  scripts\patch_game.py         in-place game-script patcher (+ --unpatch)
+  html\                         the overview map (open html\index.html)
+  README.md                     full technical write-up

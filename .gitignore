@@ -1,6 +1,23 @@
-html/node_modules
-html/img/*
-scale.txt
-testmakemap.ahk
-g_celldata.json
-g_celldata0.json
+# --- user-generated map data (produced by setup.ps1 / the python scripts) ---
+# Your world's data and the flattened tiles are personal output, not source.
+/html/assets/json/cells.json
+/html/assets/img/tiles_uid/*
+!/html/assets/img/tiles_uid/.gitkeep
+
+# NOTE: setup.ps1 also embeds cells.json into html/index.html for local viewing.
+# If you maintain this repo, don't commit that change - restore the pristine file
+# with:  git checkout -- html/index.html
+
+# --- installer backups ---
+/sm_overview_backup_*/
+sm_overview_backup_*/
+
+# --- python ---
+__pycache__/
+*.pyc
+*.pyo
+
+# --- editor / OS ---
+.DS_Store
+Thumbs.db
+*.swp

@@ -1,0 +1,35 @@
+Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International
+(CC BY-NC-SA 4.0)
+
+This project is a derivative work of "sm_overview" by the1killer
+(https://github.com/the1killer/sm_overview), which is licensed under
+CC BY-NC-SA 4.0. In keeping with the ShareAlike term, this derivative is
+released under the same license.
+
+You are free to:
+  - Share  — copy and redistribute the material in any medium or format
+  - Adapt  — remix, transform, and build upon the material
+
+Under the following terms:
+  - Attribution — You must give appropriate credit to the1killer (the original
+    author) and to this project, provide a link to the license, and indicate if
+    changes were made.
+  - NonCommercial — You may not use the material for commercial purposes.
+  - ShareAlike — If you remix, transform, or build upon the material, you must
+    distribute your contributions under this same license.
+
+Full license text: https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode
+Human-readable summary: https://creativecommons.org/licenses/by-nc-sa/4.0/
+
+------------------------------------------------------------------------------
+Changes made in this derivative (relative to the original sm_overview):
+  - Reworked the export for Scrap Mechanic 0.6.6+ (sm.json.save was sandboxed):
+    the cell data is now written to the game log and rebuilt into cells.json.
+  - Version-safe in-place patcher for the game scripts (patch_game.py) instead
+    of copying pre-patched files.
+  - Automatic tile imagery sourced and flattened from the game's own tile files
+    (build_tiles.py), covering tiles the original had no screenshots for.
+  - Guided one-shot installer (setup.ps1) and automatic JSON embedding.
+
+Scrap Mechanic is property of Axolot Games AB. This project has no affiliation
+with Axolot Games.
